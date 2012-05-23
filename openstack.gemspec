@@ -32,7 +32,7 @@ Gem::Specification.new do |s|
     "lib/openstack/swift/container.rb",
     "lib/openstack/swift/storage_object.rb"
   ]
-  s.homepage = "https://launchpad.net/ruby-openstack-compute"
+  s.homepage = "https://github.com/marios/ruby-openstack"
   s.require_paths = ["lib"]
   s.rubygems_version = "1.7.2"
   s.summary = "OpenStack Ruby API"
