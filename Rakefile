@@ -9,7 +9,7 @@ begin
     gemspec.summary = "OpenStack Ruby API"
     gemspec.description = "API Binding for OpenStack"
     gemspec.email = ["dprince@redhat.com","marios@redhat.com"]
-    gemspec.homepage = "https://github.com/marios/ruby-openstack"
+    gemspec.homepage = "https://github.com/ruby-openstack/ruby-openstack"
     gemspec.authors = ["Dan Prince", "Marios Andreou"]
     gemspec.add_dependency 'json'
     gemspec.files = Dir.glob('lib/**/*.rb')

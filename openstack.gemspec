@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Dan Prince", "Marios Andreou"]
-  s.date = "2012-05-23"
+  s.date = "2012-05-24"
   s.description = "API Binding for OpenStack"
   s.email = ["dprince@redhat.com", "marios@redhat.com"]
   s.extra_rdoc_files = [
@@ -32,7 +32,7 @@ Gem::Specification.new do |s|
     "lib/openstack/swift/container.rb",
     "lib/openstack/swift/storage_object.rb"
   ]
-  s.homepage = "https://github.com/marios/ruby-openstack"
+  s.homepage = "https://github.com/ruby-openstack/ruby-openstack"
   s.require_paths = ["lib"]
   s.rubygems_version = "1.7.2"
   s.summary = "OpenStack Ruby API"
