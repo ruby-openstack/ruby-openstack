@@ -106,7 +106,7 @@ class Connection
         chunked = OpenStack::Swift::ChunkedConnectionWrapper.new(data, 65535)
         request.body_stream = chunked
       else
-        headers['Content-Length'] = (body.respond_to?(:lstat))? body.lstat.size.to_s : ((body.respond_to?(:size))? body.size.to_s : "0")
+        headers['Content-Length'] = (data.respond_to?(:lstat))? data.lstat.size.to_s : ((data.respond_to?(:size))? data.size.to_s : "0")
         hdrhash = headerprep(headers)
         request = Net::HTTP::Put.new(path,hdrhash)
         request.body = data
