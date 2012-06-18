@@ -1,2 +1,5 @@
-Wed May 23 2012 Marios Andreou <marios@redhat.com> - 1.0.0
- - initial checkin of merged code - rackspace/ruby-cloudfiles and rackspace/ruby-openstack-compute
+* Mon June 18 2012 Marios Andreou <marios@redhat.com> - 1.0.0
+  - adds key based authentication (ec2 style key/priv. key) - also allows for authtenant_id instead of authtenant/authtenant_name
+
+* Wed May 23 2012 Marios Andreou <marios@redhat.com> - 1.0.0
+  - initial checkin of merged code - rackspace/ruby-cloudfiles and rackspace/ruby-openstack-compute
