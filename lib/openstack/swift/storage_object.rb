@@ -46,7 +46,7 @@ module Swift
     # cont.create_object("my_new_object", {}, "object data")
     #
     def self.create(container, objectname, headers={}, data=nil)
-      provided_headers = (headers[:metadata] || {}).inject({}){|res, (k,v)| ((k.match /^X-Object-Meta-/i) ? res[k]=v : res["X-Object-Meta-#{k}"]=v) ;res}
+      provided_headers = (headers[:metadata] || {}).inject({}){|res, (k,v)| ((k.to_s.match /^X-Object-Meta-/i) ? res[k.to_s]=v : res["X-Object-Meta-#{k.to_s}"]=v) ;res}
       provided_headers["content-type"] = headers[:content_type] unless headers[:content_type].nil?
       provided_headers["ETag"] = headers[:etag] unless headers[:etag].nil?
       provided_headers["X-Object-Manifest"] = headers[:manifest] unless headers[:manifest].nil?

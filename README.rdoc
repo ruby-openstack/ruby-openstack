@@ -8,6 +8,40 @@ Currently supports both v1.0 and v2.0 (keystone) auth.
 
 Use OpenStack::Connection.create to get a handle to an OpenStack service - set the :service_type parameter to either 'compute' or 'object-store' (defaults to 'compute')
 
+The OpenStack::Connection.create class method is a factory constructor which will return the appropriate Connection object, depending on the ':service_type' parameter passed with the options hash: set to either 'compute' or 'object-store' (defaults to 'compute') - see below for examples.
+
+Other parameters for the create method:
+
+* :auth_url - the OpenStack service provider specific authentication url endpoint.
+* :auth_method - the type of authentication to be used with the above auth_url - either 'password' (username/password, 'key' (ec2 style key/private key)  or 'rax-kskey'.
+* :authtenant_name OR :authtenant_id - one of these MUST be specified when talking to a v2 authentication endpoint (keystone) - depending on whether you use tenant name (or tenant ID). Passing only :authtenant will result in that parameter being used as tenant name.
+* :username - the username or public key (depending on auth_method)
+* :api_key - the password or private key (denending on auth_method).
+
+=== Try it out:
+
+  sudo gem install openstack
+    [sudo] password for herp:
+    Successfully installed openstack-1.0.0
+
+  [herp@name lib]$ irb -rubygems
+  irb(main):001:0> require 'openstack'
+    => true
+
+  irb(main):002:0> os = OpenStack::Connection.create({:username => "herp@derp.net", :api_key=>"1234abcd", :auth_method=>"password", :auth_url => "https://regionerer-g.go-bar.identity.dacloudfoo.herpy:13327/v2.0/", :authtenant_name =>"herp@derp.net-default-tenant", :service_type=>"compute"})
+
+    => #<OpenStack::Compute::Connection:0xb7339070 @connection=#<OpenStack::Connection:0xb73392dc @service_scheme="https", @auth_host="regionerer-g.go-bar.identity.dacloudfoo.herpy", @http={}, @service_name=nil, @authuser="herp@derp.net", @proxy_port=nil, @auth_path="/v2.0/", @authtenant={:type=>"tenantName", :value=>"herp@derp.net-default-tenant"}, @service_port=443, @authkey="1235abcd", @authok=true, @service_type="compute", @auth_method="password", @auth_scheme="https", @service_host="az-2.region-a.geo-1.dacloudfoo.herpy", @is_debug=nil, @proxy_host=nil, @service_path="/v1.1/482195756462871", @auth_port=35357, @auth_url="https://regionerer-g.go-bar.identity.dacloudfoo.herpy:13327/v2.0/", @region=nil, @authtoken="Auth_543254fdsasabd546543a3", @retry_auth=nil>>
+
+  irb(main):003:0> os.servers
+    => []
+
+  irb(main):004:0> os = OpenStack::Connection.create({:username => "AWHFDADHJ32EL6V23GFK", :api_key=>"jd823jFDJEY2/82jfhYteG52AKJAUEY184JHRfeR", :auth_method=> "key", :auth_url => "https://regionerer-g.go-bar.identity.dacloudfoo.herpy:13327/v2.0/", :authtenant_id =>"482195756462871", :service_type=>"object-store"})
+
+    => #<OpenStack::Swift::Connection:0xb72ff2a8 @connection=#<OpenStack::Connection:0xb72ff460 @service_scheme="https", @auth_host="regionerer-g.go-bar.identity.dacloudfoo.herpy", @http={}, @service_name=nil, @authuser="AWHFDADHJ32EL6V23GFK", @proxy_port=nil, @auth_path="/v2.0/", @authtenant={:type=>"tenantId", :value=>"482195756462871"}, @service_port=443, @authkey="jd823jFDJEY2/82jfhYteG52AKJAUEY184JHRfeR", @authok=true, @service_type="object-store", @auth_method="key", @auth_scheme="https", @service_host="region-a.geo-1.objects.dacloudfoo.herpy", @is_debug=nil, @proxy_host=nil, @service_path="/v1.0/482195756462871", @auth_port=35357, @auth_url="https://regionerer-g.go-bar.identity.dacloudfoo.herpy:13327/v2.0/", @region=nil, @authtoken="Auth_543254fdsasabd546543a3", @retry_auth=nil>>
+
+  irb(main):006:0> os.containers
+    => ["herpy_Foo_container", "derpy_bar_bucket"]
+
 == Examples
 
 == For Compute:
