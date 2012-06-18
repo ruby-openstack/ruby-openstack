@@ -37,9 +37,11 @@ class Connection
     #
     #   options hash:
     #
-    #   :username - Your OpenStack username *required*
-    #   :tenant - Your OpenStack tenant *required*. Defaults to username.
-    #   :api_key - Your OpenStack API key *required*
+    #   :auth_method - Type of authentication - 'password', 'key', 'rax-kskey' - defaults to 'password'
+    #   :username - Your OpenStack username or public key, depending on auth_method. *required*
+    #   :authtenant_name OR :authtenant_id - Your OpenStack tenant name or id *required*. Defaults to username.
+    #     passing :authtenant will default to using that parameter as tenant name.
+    #   :api_key - Your OpenStack API key *required* (either private key or password, depending on auth_method)
     #   :auth_url - Configurable auth_url endpoint.
     #   :service_name - (Optional for v2.0 auth only). The optional name of the compute service to use.
     #   :service_type - (Optional for v2.0 auth only). Defaults to "compute"
