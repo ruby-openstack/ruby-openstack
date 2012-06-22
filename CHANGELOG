@@ -1,3 +1,6 @@
+* Fri June 22 2012 Marios Andreou <marios@redhat.com> - 1.0.1 #version bump
+  - adds support for api_extensions - keypairs (list/create/delete and include in server instance params)
+
 * Mon June 18 2012 Marios Andreou <marios@redhat.com> - 1.0.0
   - adds key based authentication (ec2 style key/priv. key) - also allows for authtenant_id instead of authtenant/authtenant_name
 

@@ -93,8 +93,54 @@ See the class definitions for documentation on specific methods and operations.
   >> newserver.progress
   => 12
 
+  # Create a new server and specify the keyname to be used (some provider support the Keys extension):
+  >> server = os.create_server({:imageRef=>14075, :flavorRef=>100, :key_name=>"my_default_key", :name=>"marios_server"})
+  => #<OpenStack::Compute::Server:0x101433f08 ....
+  >> server.key_name
+  => "my_default_key"
+
   # Delete the new server
   >> newserver.delete!
+  => true
+
+=== Compute API extensions.
+
+  # Get info on extensions offered by the given OpenStack provider:
+  >> os.api_extensions
+  => { :os-keypairs     =>  { :links=>[], :updated=>"2011-08-08T00:00:00+00:00", :description=>"Keypair Support",
+                              :namespace=>"http://docs.openstack.org/ext/keypairs/api/v1.1", :name=>"Keypairs",
+                              :alias=>"os-keypairs" },
+       :os-floating_ips =>  { :links=>[], :updated=>"2011-06-16T00:00:00+00:00", :description=>"Floating IPs support",
+                              :namespace=>"http://docs.openstack.org/ext/floating_ips/api/v1.1", :name=>"Floating_ips", :alias=>"os-floating-ips"},
+        ... }
+
+  # Get list of keypairs for current tenant/account:
+  >> os.keypairs
+  => { :key_one => {  :fingerprint  =>  "3f:12:4d:d1:54:f1:f4:3f:fe:a8:12:ec:1a:fb:35:b2",
+                      :public_key   =>  "ssh-rsa AAAAB3Nza923kJ  ...
+                      :name         =>  "key_one"},
+       :key_two =>  { ... },
+      ... }
+
+  # Create new keypair:
+  >> os.create_keypair({:name=>"test_key"})
+  => {  :name         =>  "test_key",
+        :fingerprint  =>  "f1:f3:a2:d3:ca:75:da:f1:06:f4:f7:dc:cc:7d:e1:ca",
+        :user_id      =>  "dev_41247879706381",$
+        :public_key   =>  "ssh-rsa AAAAB3NzaC1y    ...
+        :private_key  =>  "-----BEGIN RSA PRIVATE KEY-----\nMIICXwIBA ... -----END RSA PRIVATE KEY-----\n"
+     }
+
+  # Import keypair:
+  >> os.create_keypair({:name=>"test_key_imported", :public_key=>"sh-rsa AAAAB3Nza923kJ  ..."})
+  => {  :name         =>  "test_key_imported",
+        :fingerprint  =>  "f1:f3:a2:d3:ca:75:da:f1:06:f4:f7:dc:cc:7d:e1:ca",
+        :user_id      =>  "dev_41247879706381",$
+        :public_key   =>  "ssh-rsa AAAAB3Nza ...
+     }
+
+  # Delete Keypair:
+  >> os.delete_keypair("test_key_imported")
   => true
 
 == Examples for Object-Store:
