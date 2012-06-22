@@ -37,9 +37,11 @@ class Connection
     #
     #   options hash:
     #
-    #   :username - Your OpenStack username *required*
-    #   :tenant - Your OpenStack tenant *required*. Defaults to username.
-    #   :api_key - Your OpenStack API key *required*
+    #   :auth_method - Type of authentication - 'password', 'key', 'rax-kskey' - defaults to 'password'
+    #   :username - Your OpenStack username or public key, depending on auth_method. *required*
+    #   :authtenant_name OR :authtenant_id - Your OpenStack tenant name or id *required*. Defaults to username.
+    #     passing :authtenant will default to using that parameter as tenant name.
+    #   :api_key - Your OpenStack API key *required* (either private key or password, depending on auth_method)
     #   :auth_url - Configurable auth_url endpoint.
     #   :service_name - (Optional for v2.0 auth only). The optional name of the compute service to use.
     #   :service_type - (Optional for v2.0 auth only). Defaults to "compute"
@@ -72,7 +74,7 @@ class Connection
       @authuser = options[:username] || (raise Exception::MissingArgument, "Must supply a :username")
       @authkey = options[:api_key] || (raise Exception::MissingArgument, "Must supply an :api_key")
       @auth_url = options[:auth_url] || (raise Exception::MissingArgument, "Must supply an :auth_url")
-      @authtenant = options[:authtenant] || @authuser
+      @authtenant = (options[:authtenant_id])? {:type => "tenantId", :value=>options[:authtenant_id]} : {:type=>"tenantName", :value=>(options[:authtenant_name] || options[:authtenant] || @authuser)}
       @auth_method = options[:auth_method] || "password"
       @service_name = options[:service_name] || nil
       @service_type = options[:service_type] || "compute"
@@ -106,7 +108,7 @@ class Connection
         chunked = OpenStack::Swift::ChunkedConnectionWrapper.new(data, 65535)
         request.body_stream = chunked
       else
-        headers['Content-Length'] = (body.respond_to?(:lstat))? body.lstat.size.to_s : ((body.respond_to?(:size))? body.size.to_s : "0")
+        headers['Content-Length'] = (data.respond_to?(:lstat))? data.lstat.size.to_s : ((data.respond_to?(:size))? data.size.to_s : "0")
         hdrhash = headerprep(headers)
         request = Net::HTTP::Put.new(path,hdrhash)
         request.body = data
@@ -260,12 +262,15 @@ class AuthV20
 
     @uri = String.new
 
-    if connection.auth_method == "password"
-      auth_data = JSON.generate({ "auth" =>  { "passwordCredentials" => { "username" => connection.authuser, "password" => connection.authkey }, "tenantName" => connection.authtenant}})
-    elsif connection.auth_method == "rax-kskey"
-      auth_data = JSON.generate({"auth" => {"RAX-KSKEY:apiKeyCredentials" => {"username" => connection.authuser, "apiKey" => connection.authkey}}})
-    else
-      raise Exception::InvalidArgument, "Unrecognized auth method #{connection.auth_method}"
+    case connection.auth_method
+      when "password"
+        auth_data = JSON.generate({ "auth" =>  { "passwordCredentials" => { "username" => connection.authuser, "password" => connection.authkey }, connection.authtenant[:type] => connection.authtenant[:value]}})
+      when "rax-kskey"
+        auth_data = JSON.generate({"auth" => {"RAX-KSKEY:apiKeyCredentials" => {"username" => connection.authuser, "apiKey" => connection.authkey}}})
+      when "key"
+        auth_data = JSON.generate({"auth" => { "apiAccessKeyCredentials" => {"accessKey" => connection.authuser, "secretKey" => connection.authkey}, connection.authtenant[:type] => connection.authtenant[:value]}})
+      else
+        raise Exception::InvalidArgument, "Unrecognized auth method #{connection.auth_method}"
     end
 
     response = server.post(connection.auth_path.chomp("/")+"/tokens", auth_data, {'Content-Type' => 'application/json'})
