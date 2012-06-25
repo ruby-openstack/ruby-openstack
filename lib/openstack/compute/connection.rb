@@ -202,6 +202,117 @@ module Compute
       OpenStack.symbolize_keys(JSON.parse(response.body)['limits'])
     end
 
+# ==============================
+#  API EXTENSIONS
+#
+#  http://nova.openstack.org/api_ext/index.html
+#  http://api.openstack.org/ (grep 'Compute API Extensions')
+#
+
+
+    #query the openstack provider for any implemented extensions to the compute API
+    #returns a hash with openstack service provider's returned details
+    #about the implemented extensions, e.g.:
+    #
+    # { :os-floating_ips =>  { :links=>[],
+    #                       :updated=>"2011-06-16T00:00:00+00:00",
+    #                       :description=>"Floating IPs support",
+    #                       :namespace=>"http://docs.openstack.org/ext/floating_ips/api/v1.1",
+    #                       :name=>"Floating_ips", :alias=>"os-floating-ips"},
+    #   :os-keypairs     =>  { :links=>[],
+    #                       :updated=>"2011-08-08T00:00:00+00:00",
+    #                       :description=>"Keypair Support",
+    #                       :namespace=>"http://docs.openstack.org/ext/keypairs/api/v1.1",
+    #                       :name=>"Keypairs",
+    #                       :alias=>"os-keypairs"}
+    # }
+    #
+    def api_extensions
+      response = @connection.req("GET", "/extensions")
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      res = OpenStack.symbolize_keys(JSON.parse(response.body))
+      res[:extensions].inject({}){|result, c| result[c[:alias].to_sym] = c  ; result}
+    end
+
+    # Retrieve a list of key pairs associated with the current authenticated account
+    # Will return a hash:
+    #  { :key_one => {  :fingerprint  =>  "3f:12:4d:d1:54:f1:f4:3f:fe:a8:12:ec:1a:fb:35:b2",
+    #                   :public_key   =>  "ssh-rsa AAAAB3Nza923kJU123AADAQABAAAAg928JUwydszi029kIJudfOzQ7o160Ll1ItybDzYYcCAJ/N02loIKJU17264520bmXZFSsaZf2ErX3nSBNI3K+2zQzu832jkhkfdsa7GHH5hvNOxO7u800894312JKLJLHP/R91fdsajHKKJADSAgQ== nova@nv-zz2232-api0002\n",
+    #                   :name         =>  "key_one"},
+    #
+    #    :key_two =>  { :fingerprint  =>  "6b:32:dd:d2:51:c1:f2:3a:fb:a2:52:3a:1a:bb:25:1b",
+    #                   :public_key   =>  "ssh-rsa AKIJUuw71645kJU123AADAQABAAAAg928019oiUJY12765IJudfOzQ7o160Ll1ItybDzYYcCAJ/N80438012480321jhkhKJlfdsazu832jkhkfdsa7GHH5fdasfdsajlj2999789799987989894312JKLJLHP/R91fdsajHKKJADSAgQ== nova@bv-fdsa32-api0002\n",
+    #                   :name         =>  "key_two"}
+    #  }
+    #
+    # Raises OpenStack::Exception::NotImplemented if the current provider doesn't
+    # offer the os-keypairs extension
+    #
+    def keypairs
+      begin
+        response = @connection.req("GET", "/os-keypairs")
+        res = OpenStack.symbolize_keys(JSON.parse(response.body))
+        res[:keypairs].inject({}){|result, c| result[c[:keypair][:name].to_sym] = c[:keypair] ; result }
+      rescue OpenStack::Exception::ItemNotFound => not_found
+        msg = "The os-keypairs extension is not implemented for the provider you are talking to "+
+              "- #{@connection.http.keys.first}"
+        raise OpenStack::Exception::NotImplemented.new(msg, 501, "#{not_found.message}")
+      end
+    end
+
+    # Create a new keypair for use with launching servers. Raises
+    # a OpenStack::Exception::NotImplemented if os-keypairs extension
+    # is not implemented (or not advertised) by the OpenStack provider.
+    #
+    # The 'name' parameter MUST be supplied, otherwise a
+    # OpenStack::Exception::MissingArgument will be raised.
+    #
+    # Optionally requests can specify a 'public_key' parameter,
+    # with the full public ssh key (String) to be used to create the keypair
+    # (i.e. import a existing key).
+    #
+    # Returns a hash with details of the new key; the :private_key attribute
+    # must be saved must be saved by caller (not retrievable thereafter).
+    # NOTE: when the optional :public_key parameter is given, the response
+    # will obviously NOT contain the :private_key attribute.
+    #
+    # >> os.create_keypair({:name=>"test_key"})
+    # => {  :name         =>  "test_key",
+    #       :fingerprint  =>  "f1:f3:a2:d3:ca:75:da:f1:06:f4:f7:dc:cc:7d:e1:ca",
+    #       :user_id      =>  "dev_41247879706381",
+    #       :public_key   =>  "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDgGhDH3z9uMAvPV8ziE9BCEjHCPXGufy5bOgY5mY5jOSfdmKspdbl0z/LimHVKRDNX6HoL5qRg5V/tGH/NYP5sX2zF/XRKz16lfBxiUL1EONXA9fsTEBR3FGp8NcA7hW2+YiUxWafms4If3NFqttTQ11XqTU8JCMvms4D81lhbiQ== nova@use03147k5-eth0\n",
+    #       :private_key  =>  "-----BEGIN RSA PRIVATE KEY-----\nMIICXwIBAAKBgQDgGhDH3z9uMAvPV8ziE9BCEjHCPXGufy5bOgY5mY5jOSfdmKsp\ndbl0z/LimHVKRDNX6HoL5qRg5V/tGH/NYP5sX2zF/XRKz16lfBxiUL1EONXA9fsT\nEBR3FGp8NcA7hW2+YiUxWafms4If3NFqttTQ11XqTU8JCMvms4D81lhbiQIDAQAB\nAoGBAJ1akAfXwNEc2V4IV2sy4FtULS4nOKh+0szpjC9rm+gd3Nki9qQQ7lyQGwpy\nZID2LFsAeJnco/UJefaf6jUKcvnS7tlxMuQB8DBlepiDqnnec0EiEAVmmt9GWlYZ\nJgfGWqDzI1WtouDCIsOhx1Vq7Foue6pgOnibktg2kfYnH9IRAkEA9tKzhlr9rFui\nbVDkiRJK3VTIhKyk4davDjqPJFLJ+4+77wRW164sGxwReD7HtW6qVtJd1MFvqLDO\nqJJEsqDvXQJBAOhvGaWiAPSuP+/z6GE6VXB1pADQFTYIp2DXUa5DcStTGe7hGF1b\nDeAxpDNBbLO3YKYqi2L9vJcIsp5PkHlEVh0CQQCVLIkWBb5VQliryv0knuqiVFCQ\nZyuL1s2cQuYqZOLwaFGERtIZrom3pMImM4NN82F98cyF/pb2lE2CckyUzVF9AkEA\nqhwFjS9Pu8N7j8XWoLHsre2rJd0kaPNUbI+pe/xn6ula5XVgO5LUSOyL2+daAv2G\ngpZIhR5m07LN5wccGWRmEQJBALZRenXaSyX2R2C9ag9r2gaU8/h+aU9he5kjXIt8\n+B8wvpvfOkpOAVCQEMxtsDkEixUtI98YKZP60uw+Xzh40YU=\n-----END RSA PRIVATE KEY-----\n"
+    #   }
+    #
+    # Will raise an OpenStack::Exception::BadRequest if an invalid public_key is provided:
+    # >> os.create_keypair({:name=>"marios_keypair_test_invalid", :public_key=>"derp"})
+    # => OpenStack::Exception::BadRequest: Unexpected error while running command.
+    #    Stdout: '/tmp/tmp4kI12a/import.pub is not a public key file.\n'
+    #
+    def create_keypair(options)
+      raise OpenStack::Exception::NotImplemented.new("os-keypairs not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-keypairs"]
+      raise OpenStack::Exception::MissingArgument, "Keypair name must be supplied" unless (options[:name])
+      data = JSON.generate(:keypair => options)
+      response = @connection.req("POST", "/os-keypairs", {:data=>data})
+      res = OpenStack.symbolize_keys(JSON.parse(response.body))
+      res[:keypair]
+    end
+
+    # Delete an existing keypair. Raises OpenStack::Exception::NotImplemented
+    # if os-keypairs extension is not implemented (or not advertised) by the OpenStack provider.
+    #
+    # Returns true if succesful.
+    # >> os.delete_keypair("marios_keypair")
+    # => true
+    #
+    # Will raise OpenStack::Exception::ItemNotFound if specified keypair doesn't exist
+    #
+    def delete_keypair(keypair_name)
+      raise OpenStack::Exception::NotImplemented.new("os-keypairs not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-keypairs"]
+      @connection.req("DELETE", "/os-keypairs/#{keypair_name}")
+      true
+    end
+
   end
 end
 end

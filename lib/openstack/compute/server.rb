@@ -16,6 +16,7 @@ module Compute
     attr_reader   :flavor
     attr_reader   :metadata
     attr_accessor :adminPass
+    attr_reader   :key_name
 
     # This class is the representation of a single Server object.  The constructor finds the server identified by the specified
     # ID number, accesses the API via the populate method to get information about that server, and returns the object.
@@ -61,6 +62,7 @@ module Compute
       @hostId    = data["hostId"]
       @image   = data["image"]
       @flavor  = data["flavor"]
+      @key_name = data["key_name"] # if provider uses the keys API extension for accessing servers
       true
     end
     alias :refresh :populate
