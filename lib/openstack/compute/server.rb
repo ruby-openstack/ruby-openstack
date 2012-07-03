@@ -234,6 +234,7 @@ module Compute
     end
 
     def get_addresses(address_info)
+      address_info = OpenStack::Compute::Address.fix_labels(address_info)
       address_list = OpenStack::Compute::AddressList.new
       address_info.each do |label, addr|
         addr.each do |address|

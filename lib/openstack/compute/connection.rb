@@ -63,7 +63,11 @@ module Compute
       path = OpenStack.paginate(options).empty? ? "#{@connection.service_path}/servers/detail" : "#{@connection.service_path}/servers/detail?#{OpenStack.paginate(options)}"
       response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
-      OpenStack.symbolize_keys(JSON.parse(response.body)["servers"])
+      json_server_list = JSON.parse(response.body)["servers"]
+      json_server_list.each do |server|
+        server["addresses"] = OpenStack::Compute::Address.fix_labels(server["addresses"])
+      end
+      OpenStack.symbolize_keys(json_server_list)
     end
     alias :servers_detail :list_servers_detail
 
