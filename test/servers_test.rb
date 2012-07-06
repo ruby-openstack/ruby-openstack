@@ -5,9 +5,9 @@ class ServersTest < Test::Unit::TestCase
   include TestConnection
 
   def setup
-    @conn=get_test_connection
+    @comp=get_test_connection
   end
-  
+
   def test_list_servers
 
     json_response = %{{
@@ -57,14 +57,11 @@ class ServersTest < Test::Unit::TestCase
     }}
     response = mock()
     response.stubs(:code => "200", :body => json_response)
-
-    @conn.stubs(:csreq).returns(response)
-    servers=@conn.list_servers
-
+    @comp.connection.stubs(:csreq).returns(response)
+    servers=@comp.list_servers
     assert_equal 2, servers.size
     assert_equal 1234, servers[0][:id]
     assert_equal "sample-server", servers[0][:name]
-
   end
 
   def test_get_server
@@ -136,7 +133,7 @@ class ServersTest < Test::Unit::TestCase
                 },
                 {
                     "version": 6,
-                    "addr": "::babe:67.23.10.138"
+                    "addr": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
                 }
             ],
             "private" : [
@@ -146,7 +143,7 @@ class ServersTest < Test::Unit::TestCase
                 },
                 {
                     "version": 6,
-                    "addr": "::babe:10.176.42.19"
+                    "addr": "fe80:0000:0000:0000:0202:b3ff:fe1e:8329"
                 }
             ]
         },
@@ -168,7 +165,7 @@ class ServersTest < Test::Unit::TestCase
     response = mock()
     response.stubs(:code => "200", :body => json_response)
 
-    @conn.stubs(:csreq).returns(response)
+    @comp.connection.stubs(:csreq).returns(response)
     server.rebuild!(:name => "newName")
 
     assert_not_nil server.adminPass
@@ -206,12 +203,8 @@ private
 
     response = mock()
     response.stubs(:code => "200", :body => json_response)
-
-    @conn=get_test_connection
-
-    @conn.stubs(:csreq).returns(response)
-    return @conn.server(1234) 
-
+    @comp.connection.stubs(:csreq).returns(response)
+    return @comp.server(1234)
   end
 
 end
