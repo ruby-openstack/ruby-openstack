@@ -64,7 +64,7 @@ module Compute
       @image   = data["image"]
       @flavor  = data["flavor"]
       @key_name = data["key_name"] # if provider uses the keys API extension for accessing servers
-      @security_groups = data["security_groups"].inject([]){|res, c| res << c["id"]  ; res}
+      @security_groups = (data["security_groups"] || []).inject([]){|res, c| res << c["id"]  ; res}
       true
     end
     alias :refresh :populate
