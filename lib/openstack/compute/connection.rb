@@ -114,7 +114,7 @@ module Compute
     def create_server(options)
       raise OpenStack::Exception::MissingArgument, "Server name, flavorRef, and imageRef, must be supplied" unless (options[:name] && options[:flavorRef] && options[:imageRef])
       options[:personality] = Personalities.get_personality(options[:personality])
-      options[:security_groups] = options[:security_groups].inject([]){|res, c| res << {"name"=>c} ;res}
+      options[:security_groups] = (options[:security_groups] || []).inject([]){|res, c| res << {"name"=>c} ;res}
       data = JSON.generate(:server => options)
       response = @connection.csreq("POST",@connection.service_host,"#{@connection.service_path}/servers",@connection.service_port,@connection.service_scheme,{'content-type' => 'application/json'},data)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
@@ -343,21 +343,21 @@ module Compute
     #     "1234" => { ... } }
     #
     def security_groups
-      raise OpenStack::Exception::NotImplemented.new("os-keypairs not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
+      raise OpenStack::Exception::NotImplemented.new("os-security-groups not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
       response = @connection.req("GET", "/os-security-groups")
       res = OpenStack.symbolize_keys(JSON.parse(response.body))
       res[:security_groups].inject({}){|result, c| result[c[:id].to_s] = c ; result }
     end
 
     def security_group(id)
-      raise OpenStack::Exception::NotImplemented.new("os-keypairs not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
+      raise OpenStack::Exception::NotImplemented.new("os-security-groups not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
       response = @connection.req("GET", "/os-security-groups/#{id}")
       res = OpenStack.symbolize_keys(JSON.parse(response.body))
       {res[:security_group][:id].to_s => res[:security_group]}
     end
 
     def create_security_group(name, description)
-      raise OpenStack::Exception::NotImplemented.new("os-keypairs not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
+      raise OpenStack::Exception::NotImplemented.new("os-security-groups not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
       data = JSON.generate(:security_group => { "name" => name, "description" => description})
       response = @connection.req("POST", "/os-security-groups", {:data => data})
       res = OpenStack.symbolize_keys(JSON.parse(response.body))
@@ -365,16 +365,16 @@ module Compute
     end
 
     def delete_security_group(id)
-      raise OpenStack::Exception::NotImplemented.new("os-keypairs not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
+      raise OpenStack::Exception::NotImplemented.new("os-security-groups not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
       response = @connection.req("DELETE", "/os-security-groups/#{id}")
       true
     end
 
     #params: { :ip_protocol=>"tcp", :from_port=>"123", :to_port=>"123", :cidr=>"192.168.0.1/16", :group_id:="123" }
     #observed behaviour against Openstack@HP cloud - can specify either cidr OR group_id as source, but not both
-    #if both specified, the goup is used and the cidr ignored.
+    #if both specified, the group is used and the cidr ignored.
     def create_security_group_rule(security_group_id, params)
-      raise OpenStack::Exception::NotImplemented.new("os-keypairs not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
+      raise OpenStack::Exception::NotImplemented.new("os-security-groups not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
       params.merge!({:parent_group_id=>security_group_id.to_s})
       data = JSON.generate(:security_group_rule => params)
       response = @connection.req("POST", "/os-security-group-rules", {:data => data})
@@ -383,7 +383,7 @@ module Compute
     end
 
     def delete_security_group_rule(id)
-      raise OpenStack::Exception::NotImplemented.new("os-keypairs not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
+      raise OpenStack::Exception::NotImplemented.new("os-security-groups not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
       response = @connection.req("DELETE", "/os-security-group-rules/#{id}")
       true
     end
