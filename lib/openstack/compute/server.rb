@@ -17,6 +17,7 @@ module Compute
     attr_reader   :metadata
     attr_accessor :adminPass
     attr_reader   :key_name
+    attr_reader   :security_groups
 
     # This class is the representation of a single Server object.  The constructor finds the server identified by the specified
     # ID number, accesses the API via the populate method to get information about that server, and returns the object.
@@ -53,7 +54,7 @@ module Compute
           OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
           data = JSON.parse(response.body)["server"]
       end
-      @id        = data["id"]
+      @id        = data["uuid"]
       @name      = data["name"]
       @status    = data["status"]
       @progress  = data["progress"]
@@ -63,6 +64,7 @@ module Compute
       @image   = data["image"]
       @flavor  = data["flavor"]
       @key_name = data["key_name"] # if provider uses the keys API extension for accessing servers
+      @security_groups = data["security_groups"].inject([]){|res, c| res << c["id"]  ; res}
       true
     end
     alias :refresh :populate
