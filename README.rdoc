@@ -93,11 +93,12 @@ See the class definitions for documentation on specific methods and operations.
   >> newserver.progress
   => 12
 
-  # Create a new server and specify the keyname to be used (some provider support the Keys extension):
-  >> server = os.create_server({:imageRef=>14075, :flavorRef=>100, :key_name=>"my_default_key", :name=>"marios_server"})
+  # Create a new server and specify the keyname and security_groups to be used (dependent on provider support for these API extensions):
+  >> server = os.create_server({:imageRef=>14075, :flavorRef=>100, :key_name=>"my_default_key", :security_groups=>["test", "default"], :name=>"marios_server"})
   => #<OpenStack::Compute::Server:0x101433f08 ....
   >> server.key_name
   => "my_default_key"
+  >> server.security_groups
 
   # Delete the new server
   >> newserver.delete!
@@ -141,6 +142,41 @@ See the class definitions for documentation on specific methods and operations.
 
   # Delete Keypair:
   >> os.delete_keypair("test_key_imported")
+  => true
+
+  # List all security groups:
+  >> os.security_groups
+  =>  { "1381" => { :tenant_id=>"12345678909876", :id=>1381, :name=>"default", :description=>"default",
+                    :rules=> [
+                        {:from_port=>22, :group=>{}, :ip_protocol=>"tcp", :to_port=>22,
+                         :parent_group_id=>1381, :ip_range=>{:cidr=>"0.0.0.0/0"}, :id=>4902},
+                             ]
+                   },
+        "1234" => { ... } }
+
+  # Get a specific security group:
+  >> os.security_group(1381)
+  =>  { "1381" => { :tenant_id=>"12345678909876", :id=>1381, :name=>"default", :description=>"default",
+                    :rules=> [
+                        {:from_port=>22, :group=>{}, :ip_protocol=>"tcp", :to_port=>22,
+                         :parent_group_id=>1381, :ip_range=>{:cidr=>"0.0.0.0/0"}, :id=>4902},
+                             ]
+                   }}
+
+  #Create a new security group:
+  >> os.create_security_group("devel_group", "all development machines")
+  => {"9573"=>{:rules=>[], :tenant_id=>"46871569847393", :id=>9573, :name=>"devel_group", :description=>"all development machines"}}
+
+  #Create a new security group rule - first param is id of the security group for this rule. Instead of :cidr you may specify :group_id to use another group as source:
+  >> os.create_security_group_rule(9567, {:ip_protocol=>"tcp", :from_port=>"123", :to_port=>"123", :cidr=>"192.168.0.1/16" })
+  => => {"27375"=>{:from_port=>123, :group=>{}, :ip_protocol=>"tcp", :to_port=>123, :parent_group_id=>9573, :ip_range=>{:cidr=>"192.168.0.1/16"}, :id=>27375}}
+
+  #Delete a security group rule:
+  >> os.delete_security_group_rule(27375)
+  => true
+
+  #Delete a security group:
+  >>  os.delete_security_group(9571)
   => true
 
 == Examples for Object-Store:

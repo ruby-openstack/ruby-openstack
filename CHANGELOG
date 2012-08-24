@@ -1,3 +1,8 @@
+* Fri Aug 24 2012 Marios Andreou <marios@redhat.com> - 1.0.2
+  - adds support for security_groups api extension
+  - fixes labelling of IP addresses - public/private
+  - first pass at fixing tests - they run, but aren't complete.
+
 * Fri June 22 2012 Marios Andreou <marios@redhat.com> - 1.0.1 #version bump
   - adds support for api_extensions - keypairs (list/create/delete and include in server instance params)
 
