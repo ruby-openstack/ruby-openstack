@@ -100,7 +100,6 @@ class Connection
 
     #specialised from of csreq for PUT object... uses body_stream if possible
     def put_object(server,path,port,scheme,headers = {},data = nil,attempts = 0) # :nodoc:
-      start = Time.now
       if data.respond_to? :read
         headers['Transfer-Encoding'] = 'chunked'
         hdrhash = headerprep(headers)
@@ -139,7 +138,6 @@ class Connection
 
     # This method actually makes the HTTP REST calls out to the server
     def csreq(method,server,path,port,scheme,headers = {},data = nil,attempts = 0, &block) # :nodoc:
-      start = Time.now
       hdrhash = headerprep(headers)
       start_http(server,path,port,scheme,hdrhash)
       request = Net::HTTP.const_get(method.to_s.capitalize).new(path,hdrhash)
@@ -304,7 +302,7 @@ class AuthV20
       connection.authtoken = false
       raise OpenStack::Exception::Authentication, "Authentication failed with response code #{response.code}"
     end
-    server.finish
+    server.finish if server.started?
   end
 end
 
@@ -448,7 +446,7 @@ class Exception
   # "404 Not Found\n\nThe resource could not be found.\n\n   "
   # which doesn't parse. Deal with such cases here if possible (JSON::ParserError)
   def self.deal_with_faulty_error(response, parse_error)
-  case response.code
+    case response.code
     when "404"
       klass = self.const_get("ItemNotFound")
       msg = "The resource could not be found"
