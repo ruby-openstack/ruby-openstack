@@ -1,5 +1,4 @@
 require 'rubygems'
-gem 'test-unit'
 require 'test/unit'
 require 'mocha'
 $:.unshift File.dirname(__FILE__) + '/../lib'
@@ -16,7 +15,6 @@ def get_test_connection
     server.stubs(:get => conn_response, :use_ssl= => true, :verify_mode= => true)
     #server.stubs(:get).returns(conn_response)
     Net::HTTP.stubs(:new).returns(server)
-
     OpenStack::Connection.create(:username => "test_account", :api_key => "AABBCCDD11", :auth_url => "http://a.b.c")
 
 end

@@ -1,3 +1,11 @@
+*Wed Sep 06 2012 Marios Andreou <marios@redhat.com> - 1.0.4
+  - bug fixes: https://github.com/ruby-openstack/ruby-openstack/issues/9,
+  - https://github.com/ruby-openstack/ruby-openstack/pull/10
+
+* Fri Aug 24 2012 Marios Andreou <marios@redhat.com> - 1.0.3
+  - bugfix - missed case when provider doesn't support security groups (null pointer
+    trying to grab non existing key from /server/id response)
+
 * Fri Aug 24 2012 Marios Andreou <marios@redhat.com> - 1.0.2
   - adds support for security_groups api extension
   - fixes labelling of IP addresses - public/private
