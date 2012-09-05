@@ -8,7 +8,7 @@ class AuthenticationTest < Test::Unit::TestCase
     server = mock(:use_ssl= => true, :verify_mode= => true, :start => true, :finish => true)
     server.stubs(:get).returns(response)
     Net::HTTP.stubs(:new).returns(server)
-    connection = stub(:authuser => 'good_user', :authtenant => 'good_tenant', :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v1.0", :service_type=>"compute", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo')
+    connection = stub(:authuser => 'good_user',:authtenant => {:type=>"tenantName", :value=>'good_tenant'}, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v1.0", :service_type=>"compute", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo')
     result = OpenStack::Authentication.init(connection)
     assert_equal result.class, OpenStack::AuthV10
   end
@@ -19,7 +19,7 @@ class AuthenticationTest < Test::Unit::TestCase
     server = mock(:use_ssl= => true, :verify_mode= => true, :start => true)
     server.stubs(:get).returns(response)
     Net::HTTP.stubs(:new).returns(server)
-    connection = stub(:authuser => 'bad_user', :authtenant => 'good_tenant', :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v1.0", :authok= => true, :authtoken= => true, :proxy_host => nil, :proxy_port => nil, :api_path => '/foo')
+    connection = stub(:authuser => 'bad_user', :authtenant => {:type=>"tenantName", :value=>'good_tenant'}, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v1.0", :authok= => true, :authtoken= => true, :proxy_host => nil, :proxy_port => nil, :api_path => '/foo')
     assert_raises(OpenStack::Exception::Authentication) do
       result = OpenStack::Authentication.init(connection)
     end
@@ -27,7 +27,7 @@ class AuthenticationTest < Test::Unit::TestCase
 
   def test_bad_hostname
     Net::HTTP.stubs(:new).raises(OpenStack::Exception::Connection)
-    connection = stub(:authuser => 'bad_user', :authtenant => 'good_tenant', :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v1.0", :authok= => true, :authtoken= => true, :proxy_host => nil, :proxy_port => nil, :api_path => '/foo')
+    connection = stub(:authuser => 'bad_user', :authtenant => {:type=>"tenantName", :value=>'good_tenant'}, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v1.0", :authok= => true, :authtoken= => true, :proxy_host => nil, :proxy_port => nil, :api_path => '/foo')
     assert_raises(OpenStack::Exception::Connection) do
       result = OpenStack::Authentication.init(connection)
     end
@@ -36,7 +36,8 @@ class AuthenticationTest < Test::Unit::TestCase
   def test_service_region
     server = get_test_auth_server
     Net::HTTP.stubs(:new).returns(server)
-    connection = stub(:authuser => 'good_user', :auth_method => "password", :authtenant => 'good_tenant', :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v2.0", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo', :service_type => "compute", :service_name => "cloudServers", :region => "South")
+    server.stubs(:started?).returns(true)
+    connection = stub(:authuser => 'good_user', :auth_method => "password",:authtenant => {:type=>"tenantName", :value=>'good_tenant'} , :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v2.0", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo', :service_type => "compute", :service_name => "cloudServers", :region => "South")
     result = OpenStack::Authentication.init(connection)
     assert_equal("compute.south.host", result.uri.host)
   end
@@ -44,7 +45,8 @@ class AuthenticationTest < Test::Unit::TestCase
   def test_service_name
     server = get_test_auth_server
     Net::HTTP.stubs(:new).returns(server)
-    connection = stub(:authuser => 'good_user', :auth_method=>"password", :authtenant => 'good_tenant', :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v2.0", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo', :service_type => "nova", :service_name => "cloudCompute", :region => "South")
+    server.stubs(:started?).returns(true)
+    connection = stub(:authuser => 'good_user', :auth_method=>"password", :authtenant => {:type=>"tenantName", :value=>'good_tenant'}, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v2.0", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo', :service_type => "nova", :service_name => "cloudCompute", :region => "South")
     result = OpenStack::Authentication.init(connection)
     assert_equal("nova.south.host", result.uri.host)
   end
@@ -52,7 +54,8 @@ class AuthenticationTest < Test::Unit::TestCase
   def test_service_type
     server = get_test_auth_server
     Net::HTTP.stubs(:new).returns(server)
-    connection = stub(:authuser => 'good_user', :auth_method => "password", :authtenant => 'good_tenant', :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v2.0", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo', :service_type => "nova", :service_name => nil, :region => "North")
+    server.stubs(:started?).returns(true)
+    connection = stub(:authuser => 'good_user', :auth_method => "password", :authtenant => {:type=>"tenantName", :value=>'good_tenant'}, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v2.0", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo', :service_type => "nova", :service_name => nil, :region => "North")
     result = OpenStack::Authentication.init(connection)
     assert_equal("nova.north.host", result.uri.host)
   end

@@ -109,7 +109,7 @@ class MetadataTest < Test::Unit::TestCase
     conn.expects(:req).with('PUT', 'blah/metadata/key2', :data => json).returns(response)
     data = {'key1' => 'value1', 'key2' => 'value2'}
     metadata = OpenStack::Compute::Metadata.new(compute, 'blah', data)
-    metadata.update('key2')
+    metadata.update(['key2'])
   end
 
   def test_metadata_update_nonexistent_key
@@ -118,7 +118,7 @@ class MetadataTest < Test::Unit::TestCase
     conn = mock()
     compute.stubs(:connection).returns(conn)
     metadata = OpenStack::Compute::Metadata.new(compute, 'blah', data)
-    metadata.update('key3') # just asserting nothing is called on conn
+    metadata.update(['key3']) # just asserting nothing is called on conn
   end
 
   def test_metadata_update_nil
@@ -138,7 +138,7 @@ class MetadataTest < Test::Unit::TestCase
     compute.stubs(:connection).returns(conn)
     conn.expects(:req).with('GET', 'blah/metadata/key1').returns(response)
     metadata = OpenStack::Compute::Metadata.new(compute, 'blah')
-    metadata.refresh('key1')
+    metadata.refresh(['key1'])
     assert_equal('value1', metadata['key1'])
   end
 
@@ -167,7 +167,7 @@ class MetadataTest < Test::Unit::TestCase
     compute.stubs(:connection).returns(connection)
     connection.expects(:req).with('DELETE', 'blah/metadata/key1').returns(response)
     metadata = OpenStack::Compute::Metadata.new(compute, 'blah')
-    metadata.delete!('key1')
+    metadata.delete!(['key1'])
   end
 
   def test_delete_a_key_with_prior_information
@@ -179,7 +179,7 @@ class MetadataTest < Test::Unit::TestCase
     conn.expects(:req).with('DELETE', 'blah/metadata/key1').returns(response)
     data = {'key1' => 'value1', 'key2' => 'value2'}
     metadata = OpenStack::Compute::Metadata.new(comp, 'blah', data)
-    metadata.delete!('key1')
+    metadata.delete!(['key1'])
     assert(metadata['key1'].nil?)
     assert_equal('value2', metadata['key2'])
   end
