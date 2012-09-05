@@ -54,15 +54,15 @@ module Compute
           OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
           data = JSON.parse(response.body)["server"]
       end
-      @id        = data["uuid"]
+      @id        = data["id"] || data["uuid"]
       @name      = data["name"]
       @status    = data["status"]
       @progress  = data["progress"]
       @addresses = get_addresses(data["addresses"])
       @metadata  = OpenStack::Compute::Metadata.new(@compute, path, data["metadata"])
       @hostId    = data["hostId"]
-      @image   = data["image"]
-      @flavor  = data["flavor"]
+      @image   = data["image"] || data["imageId"]
+      @flavor  = data["flavor"] || data["flavorId"]
       @key_name = data["key_name"] # if provider uses the keys API extension for accessing servers
       @security_groups = (data["security_groups"] || []).inject([]){|res, c| res << c["id"]  ; res}
       true
