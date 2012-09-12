@@ -245,7 +245,6 @@ end
 
 class AuthV20
   attr_reader :uri
-
   def initialize(connection)
     begin
       server = Net::HTTP::Proxy(connection.proxy_host, connection.proxy_port).new(connection.auth_host, connection.auth_port)
@@ -275,6 +274,9 @@ class AuthV20
     if (response.code =~ /^20./)
       resp_data=JSON.parse(response.body)
       connection.authtoken = resp_data['access']['token']['id']
+      implemented_services = resp_data["access"]["serviceCatalog"].inject([]){|res, current| res << current["type"] ;res}
+      raise OpenStack::Exception::NotImplemented.new("The requested service: \"#{connection.service_type}\" is not present " +
+        "in the returned service catalogue.", 501, "#{resp_data["access"]["serviceCatalog"]}") unless implemented_services.include?(connection.service_type)
       resp_data['access']['serviceCatalog'].each do |service|
         if service['type'] == connection.service_type
           endpoints = service["endpoints"]
