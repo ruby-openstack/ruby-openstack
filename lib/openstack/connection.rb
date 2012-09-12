@@ -292,8 +292,8 @@ class AuthV20
           else
             # There is a possibility for some services to run on different api versions. We will keep only the greatest. 
             if connection.service_path
-              current_ver = connection.service_path.match(/\/v(\d).(\d)/).captures.to_s.to_i
-              parsed_ver = @uri.to_s.match(/\/v(\d).(\d)/).captures.to_s.to_i
+              current_ver = connection.service_path.match(/\/v(\d).(\d)/).captures.inject("",:+).to_i
+              parsed_ver = @uri.path.match(/\/v(\d).(\d)/).captures.inject("",:+).to_i
 
               if current_ver > parsed_ver
                 next
