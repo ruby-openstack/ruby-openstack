@@ -6,7 +6,7 @@ Ruby Openstack Compute and Object-Store bindings for the v1.0 OSAPI.
 
 Currently supports both v1.0 and v2.0 (keystone) auth.
 
-Use OpenStack::Connection.create to get a handle to an OpenStack service - set the :service_type parameter to either 'compute' or 'object-store' (defaults to 'compute')
+Use OpenStack::Connection.create to get a handle to an OpenStack service - set the :service_type parameter to either 'compute' or 'object-store' (defaults to 'compute'). If the requested service is not deployed the gem will throw a OpenStack::Exception::NotImplemented (501) - e.g. :service_type is 'object-store' but swift service isn't deployed.
 
 The OpenStack::Connection.create class method is a factory constructor which will return the appropriate Connection object, depending on the ':service_type' parameter passed with the options hash: set to either 'compute' or 'object-store' (defaults to 'compute') - see below for examples.
 

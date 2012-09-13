@@ -16,6 +16,7 @@ begin
     gemspec.files << "README.rdoc"
     gemspec.files << "VERSION"
     gemspec.files << "COPYING"
+    (gemspec.files << Dir.glob("test/*.rb")).flatten!
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install jeweler"

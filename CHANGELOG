@@ -1,3 +1,9 @@
+*Thu Sep 13 2012 Marios Andreou <marios@redhat.com> - 1.0.5
+  - bug fix/feature - adds a check to see if requested service is deployed
+    (e.g. set 'service_type' to 'object-store' but swift not deployed
+    => 501 Not Implemented)
+    https://github.com/ruby-openstack/ruby-openstack/pull/13
+
 *Wed Sep 06 2012 Marios Andreou <marios@redhat.com> - 1.0.4
   - bug fixes: https://github.com/ruby-openstack/ruby-openstack/issues/9,
   - https://github.com/ruby-openstack/ruby-openstack/pull/10
