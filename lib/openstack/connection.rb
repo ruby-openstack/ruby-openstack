@@ -242,9 +242,9 @@ class Authentication
 end
 
  private
-
 class AuthV20
   attr_reader :uri
+  attr_reader :version
   def initialize(connection)
     begin
       server = Net::HTTP::Proxy(connection.proxy_host, connection.proxy_port).new(connection.auth_host, connection.auth_port)
@@ -292,6 +292,14 @@ class AuthV20
           if @uri == ""
             raise OpenStack::Exception::Authentication, "No API endpoint for region #{connection.region}"
           else
+            if @version #already got one version of endpoints
+              current_version = get_version_from_response(service)
+              if @version.to_f > current_version.to_f
+                next
+              end
+            end
+            #grab version to check next time round for multi-version deployments
+            @version = get_version_from_response(service)
             connection.service_host = @uri.host
             connection.service_path = @uri.path
             connection.service_port = @uri.port
@@ -306,6 +314,17 @@ class AuthV20
     end
     server.finish if server.started?
   end
+
+  def get_version_from_response(service)
+    service["endpoints"].first["versionId"] || parse_version_from_endpoint(service["endpoints"].first["publicURL"])
+  end
+
+  #IN  --> https://az-2.region-a.geo-1.compute.hpcloudsvc.com/v1.1/46871569847393
+  #OUT --> "1.1"
+  def parse_version_from_endpoint(endpoint)
+    endpoint.match(/\/v(\d).(\d)/).to_s.sub("/v", "")
+  end
+
 end
 
 class AuthV10

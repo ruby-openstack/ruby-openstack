@@ -1,3 +1,8 @@
+*Fri Sep 21 2012 Marios Andreou (marios@redhat.com) - 1.0.6
+  - fixes related to https://github.com/ruby-openstack/ruby-openstack/pull/14
+    multi-version deployments - grab only greatest API version endpoints.
+    Thanks to andronat
+
 *Thu Sep 13 2012 Marios Andreou <marios@redhat.com> - 1.0.6
   - major bug in gemspec meant jeweler created circular reference to gem itself
     (described here: https://github.com/technicalpickles/jeweler/issues/188)
