@@ -101,7 +101,7 @@ module OpenStack
   # params = {:limit=>2, :marker="marios", :prefix=>"/"}
   # you want url = /container_name?limit=2&marker=marios
   def self.get_query_params(params, keys, url="")
-    set_keys = params.inject([]){|res, (k,v)| res << k if keys.include?(k) and not v.nil?; res }
+    set_keys = params.inject([]){|res, (k,v)| res << k if keys.include?(k) and not v.to_s.empty?; res }
     return url if set_keys.empty?
     url = "#{url}?#{set_keys[0]}=#{params[set_keys[0]]}"
     set_keys.slice!(0)
