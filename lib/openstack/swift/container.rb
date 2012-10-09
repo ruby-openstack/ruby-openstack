@@ -111,8 +111,10 @@ module Swift
     # if the request fails.
     def objects(params = {})
       objs_list = []
+      limit = params[:limit]
       while true do
         path = "/#{@name.to_s}"
+        params[:limit] = limit > 10_000 ? 10_000 : limit if limit
         path = (params.empty?)? path : OpenStack.get_query_params(params, [:limit, :marker, :prefix, :path, :delimiter], path)
         puts "GET: #{path}"
         response = @swift.connection.req("GET", URI.encode(path))
@@ -120,8 +122,8 @@ module Swift
         objs_list += objs
 
         break if objs.size == 0
-        if params[:limit]
-          params[:limit] -= objs.size
+        if limit
+          limit -= objs.size
         end
         params[:marker] = objs.last
       end
@@ -146,8 +148,10 @@ module Swift
     #      }
     def objects_detail(params = {})
       objs_list = {}
+      limit = params[:limit]
       while true do
         path = "/#{@name.to_s}"
+        params[:limit] = limit > 10_000 ? 10_000 : limit if limit
         path = (params.empty?)? path : OpenStack.get_query_params(params, [:limit, :marker, :prefix, :path, :delimiter], path)
         response = @swift.connection.req("GET", URI.encode(path))
         objs = OpenStack.symbolize_keys(JSON.parse(response.body))
@@ -157,8 +161,8 @@ module Swift
         end
 
         break if objs.size == 0
-        if params[:limit]
-          params[:limit] -= objs.size
+        if limit
+          limit -= objs.size
         end
         params[:marker] = objs.last[:name]
       end
