@@ -68,7 +68,8 @@ module Swift
     #
     def object_metadata
       path = "/#{@containername}/#{@name}"
-      response = @container.swift.connection.req("HEAD", path)
+      response = @container.swift.connection.req("HEAD", URI.encode(path))
+      return nil unless response
       resphash = response.to_hash
       meta = { :bytes=>resphash["content-length"][0],
                :content_type=>resphash["content-type"][0],

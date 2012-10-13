@@ -123,7 +123,7 @@ class Connection
       start_http(server,path,port,scheme,hdrhash)
       response = @http[server].request(request)
       if @is_debug
-          puts "REQUEST: #{method} => #{path}"
+          puts "REQUEST: PUT => #{path}"
           puts data if data
           puts "RESPONSE: #{response.body}"
           puts '----------------------------------------'
