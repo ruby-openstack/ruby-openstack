@@ -22,6 +22,7 @@ module OpenStack
   require 'net/http'
   require 'net/https'
   require 'uri'
+  require 'erb'
   require 'rubygems'
   require 'json'
   require 'date'
@@ -92,8 +93,8 @@ module OpenStack
 
   def self.paginate(options = {})
     path_args = []
-    path_args.push(URI.encode("limit=#{options[:limit]}")) if options[:limit]
-    path_args.push(URI.encode("offset=#{options[:offset]}")) if options[:offset]
+    path_args.push("limit=#{ERB::Util.url_encode(options[:limit])}") if options[:limit]
+    path_args.push("offset=#{ERB::Util.url_encode(options[:offset])}") if options[:offset]
     path_args.join("&")
   end
 
@@ -101,14 +102,8 @@ module OpenStack
   # params = {:limit=>2, :marker="marios", :prefix=>"/"}
   # you want url = /container_name?limit=2&marker=marios
   def self.get_query_params(params, keys, url="")
-    set_keys = params.inject([]){|res, (k,v)| res << k if keys.include?(k) and not v.to_s.empty?; res }
-    return url if set_keys.empty?
-    url = "#{url}?#{set_keys[0]}=#{params[set_keys[0]]}"
-    set_keys.slice!(0)
-    set_keys.each do |k|
-      url = "#{url}&#{k}=#{params[set_keys[0]]}"
-    end
-    url
+    query = params.map{|k,v| "#{k}=#{ERB::Util.url_encode(v)}" if keys.include?(k) and not v.to_s.empty? }.compact.join("&")
+    "#{url}?#{query}"
   end
 
 end
