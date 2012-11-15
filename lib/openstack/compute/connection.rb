@@ -387,6 +387,26 @@ module Compute
       response = @connection.req("DELETE", "/os-security-group-rules/#{id}")
       true
     end
+
+#VOLUMES - attach detach
+    def attach_volume(server_id, volume_id, device_id)
+      raise OpenStack::Exception::NotImplemented.new("os-volumes not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-volumes"]
+      data = JSON.generate(:volumeAttachment => {"volumeId" => volume_id, "device"=> device_id})
+      response = @connection.req("POST", "/servers/#{server_id}/os-volume_attachments", {:data=>data})
+      true
+    end
+
+    def list_attachments(server_id)
+      raise OpenStack::Exception::NotImplemented.new("os-volumes not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-volumes"]
+      response = @connection.req("GET", "/servers/#{server_id}/os-volume_attachments")
+      OpenStack.symbolize_keys(JSON.parse(response.body))
+    end
+
+    def detach_volume(server_id, attachment_id)
+      raise OpenStack::Exception::NotImplemented.new("os-volumes not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-volumes"]
+      response = @connection.req("DELETE", "/servers/#{server_id}/os-volume_attachments/#{attachment_id}")
+      true
+    end
   end
 end
 end

@@ -42,6 +42,10 @@ module OpenStack
   require 'openstack/swift/connection'
   require 'openstack/swift/container'
   require 'openstack/swift/storage_object'
+  require 'openstack/volume/connection'
+  require 'openstack/volume/volume'
+  require 'openstack/volume/snapshot'
+
 
   # Constants that set limits on server creation
   MAX_PERSONALITY_ITEMS = 5
