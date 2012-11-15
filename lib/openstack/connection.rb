@@ -63,6 +63,8 @@ class Connection
           OpenStack::Compute::Connection.new(connection)
         when "object-store"
           OpenStack::Swift::Connection.new(connection)
+        when "volume"
+          OpenStack::Volume::Connection.new(connection)
         else
           raise Exception::InvalidArgument, "Invalid :service_type parameter: #{@service_type}"
       end
