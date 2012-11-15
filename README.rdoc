@@ -182,7 +182,7 @@ See the class definitions for documentation on specific methods and operations.
   => true
 
   #Attach a volume to a server - params in order are: server_id, volume_id, attachment_point
-  
+
   >> os.attach_volume(704289, 90805, "/dev/sde")
   => true
 
@@ -199,7 +199,7 @@ See the class definitions for documentation on specific methods and operations.
 
   #NOTE - attach/detach operations are implemented for the compute service as the OS API defines these operations as extensions to Openstack Compute.
 
-  vs = OpenStack::Connection.create({:username => "marios@redhat.com", :api_key=>"C7eH7dC3m&6Ms", :auth_url => "https://region-a.geo-1.identity.hpcloudsvc.com:35357/v2.0/", :authtenant=>"marios@redhat.com-default-tenant", :service_type=>"volume"})
+  vs = OpenStack::Connection.create({:username => "username", :api_key=>"pass", :auth_url => "https://region-a.geo-1.identity.hpcloudsvc.com:35357/v2.0/", :authtenant=>"username-default-tenant", :service_type=>"volume"})
 
   # Create a volume: - MUST specify display_name and size parameters... optional params are {:display_description, :metadata=>{:key=>val, ...}, :availability_zone, :volume_type }
 
@@ -208,7 +208,7 @@ See the class definitions for documentation on specific methods and operations.
 
   >> volume.size
   => 1
-  
+
   >> volume.attachments
   => [{}]
 
