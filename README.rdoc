@@ -2,13 +2,15 @@
 
 == Description
 
-Ruby Openstack Compute and Object-Store bindings for the v1.0 OSAPI.
+Ruby Openstack Compute, Object-Store and Block Storage bindings for the OpenStack API.
+
+http://api.openstack.org/api-reference.html
 
 Currently supports both v1.0 and v2.0 (keystone) auth.
 
 Use OpenStack::Connection.create to get a handle to an OpenStack service - set the :service_type parameter to either 'compute' or 'object-store' (defaults to 'compute'). If the requested service is not deployed the gem will throw a OpenStack::Exception::NotImplemented (501) - e.g. :service_type is 'object-store' but swift service isn't deployed.
 
-The OpenStack::Connection.create class method is a factory constructor which will return the appropriate Connection object, depending on the ':service_type' parameter passed with the options hash: set to either 'compute' or 'object-store' (defaults to 'compute') - see below for examples.
+The OpenStack::Connection.create class method is a factory constructor which will return the appropriate Connection object, depending on the ':service_type' parameter passed with the options hash: set to either 'compute', 'volume', or  'object-store' (defaults to 'compute') - see below for examples.
 
 Other parameters for the create method:
 
@@ -178,6 +180,53 @@ See the class definitions for documentation on specific methods and operations.
   #Delete a security group:
   >>  os.delete_security_group(9571)
   => true
+
+  #Attach a volume to a server - params in order are: server_id, volume_id, attachment_point
+  
+  >> os.attach_volume(704289, 90805, "/dev/sde")
+  => true
+
+  #List attachments for a server:
+
+  >> os.list_attachments 704289
+  => {:volumeAttachments=>[{:device=>"/dev/sde", :serverId=>704289, :id=>90805, :volumeId=>90805}]}
+
+  #Detach volume from server - params in order are server_id and attachment_id
+  >> os.detach_volume(704289, 90805)
+  => true
+
+== Examples for Volumes:
+
+  #NOTE - attach/detach operations are implemented for the compute service as the OS API defines these operations as extensions to Openstack Compute.
+
+  vs = OpenStack::Connection.create({:username => "marios@redhat.com", :api_key=>"C7eH7dC3m&6Ms", :auth_url => "https://region-a.geo-1.identity.hpcloudsvc.com:35357/v2.0/", :authtenant=>"marios@redhat.com-default-tenant", :service_type=>"volume"})
+
+  # Create a volume: - MUST specify display_name and size parameters... optional params are {:display_description, :metadata=>{:key=>val, ...}, :availability_zone, :volume_type }
+
+  >> volume = vs.create_volume({:display_name=>"marios volume", :size=>1, :display_description=>"some new volume bla"})
+  => #<OpenStack::Volume::Volume:0x8a3c534 @id=90805, @display_name="marios volume", @display_description="some new volume bla", @size=1, @volume_type=nil, @metadata={}, @availability_zone="nova", @snapshot_id="", @attachments=[{}], @created_at="2012-11-15 13:51:23">
+
+  >> volume.size
+  => 1
+  
+  >> volume.attachments
+  => [{}]
+
+  # List volumes:
+
+  >> vs.list_volumes                    #aliased as just 'volumes' ... vs.volumes
+  => [#<OpenStack::Volume::Volume:0x8aad2e8 @id=90625, @display_name="marios volume", @display_description="attach test volume", @size=1, @volume_type=nil, @metadata={}, @availability_zone="nova", @snapshot_id="", @attachments=[{}], @created_at="2012-11-15 09:54:58">, #<OpenStack::Volume::Volume:0x8aad144 @id=90805, @display_name="marios volume", @display_description="some new volume bla", @size=1, @volume_type=nil, @metadata={}, @availability_zone="nova", @snapshot_id="", @attachments=[{}], @created_at="2012-11-15 13:51:23">]
+
+  # Get a particular volume - must specify ID:
+
+  >> vs.get_volume(90625)                #aliased as 'volume'
+  => #<OpenStack::Volume::Volume:0x8abd4a4 @id=90625, @display_name="marios volume", @display_description="attach test volume", @size=1, @volume_type=nil, @metadata={}, @availability_zone="nova", @snapshot_id="", @attachments=[{}], @created_at="2012-11-15 09:54:58">
+
+  # Delete a volume:
+
+  >> vs.delete_volume(90805)
+  => true
+
 
 == Examples for Object-Store:
 
