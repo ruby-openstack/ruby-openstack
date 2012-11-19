@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "openstack"
-  s.version = "1.0.6"
+  s.version = "1.0.7"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Dan Prince", "Marios Andreou"]
-  s.date = "2012-09-13"
+  s.date = "2012-11-19"
   s.description = "API Binding for OpenStack"
   s.email = ["dprince@redhat.com", "marios@redhat.com"]
   s.extra_rdoc_files = [
@@ -31,6 +31,9 @@ Gem::Specification.new do |s|
     "lib/openstack/swift/connection.rb",
     "lib/openstack/swift/container.rb",
     "lib/openstack/swift/storage_object.rb",
+    "lib/openstack/volume/connection.rb",
+    "lib/openstack/volume/snapshot.rb",
+    "lib/openstack/volume/volume.rb",
     "test/authentication_test.rb",
     "test/connection_test.rb",
     "test/exception_test.rb",
