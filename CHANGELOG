@@ -1,3 +1,6 @@
+*Wed Jan 23 2013 Marios Andreou (marios@redhat.com) - 1.0.8
+  - Adds support for storage snapshots
+
 *Mon Nov 19 2012 Marios Andreou (marios@redhat.com) - 1.0.7
   - Adds support for storage-volumes https://github.com/ruby-openstack/ruby-openstack/pull/15
   - Adds support for multi-version deployments(https://github.com/ruby-openstack/ruby-openstack/pull/14)
