@@ -195,7 +195,7 @@ See the class definitions for documentation on specific methods and operations.
   >> os.detach_volume(704289, 90805)
   => true
 
-== Examples for Volumes:
+== Examples for Volumes and Snaphots:
 
   #NOTE - attach/detach operations are implemented for the compute service as the OS API defines these operations as extensions to Openstack Compute.
 
@@ -227,6 +227,21 @@ See the class definitions for documentation on specific methods and operations.
   >> vs.delete_volume(90805)
   => true
 
+  # Create a snapshot: - must specify display_name and volume_id parameters... optionally also :display_description
+  >> vs.create_snapshot({:volume_id=>"3b38b570-a4ff-4444-984a-3566cbdc8ab2", :display_name=>"marios_snapshot"})
+  => #<OpenStack::Volume::Snapshot:0xa0cfea4 @id=223, @display_name="marios_snapshot", @display_description=nil, @volume_id="3b38b570-a4ff-4444-984a-3566cbdc8ab2", @status="creating", @size=1, @created_at="2013-01-23 14:25:02.654217">
+
+  # List snapshots: - aliased as just 'snapshots' ... vs.snapshots
+  >> vs.list_snapshots
+  => [#<OpenStack::Volume::Snapshot:0x9a6e4fc @id="0e76dacb-2fcf-4565-84a3-aa3d7bd16224", @display_name="marios_snapshot", @display_description=nil, @volume_id="3b38b570-a4ff-4444-984a-3566cbdc8ab2", @status="creating", @size=1, @created_at="2013-01-23T14:18:13.000000">]
+
+  # Get a specific snapshot: - aliased as 'snapshot'
+  >> vs.get_snapshot("0e76dacb-2fcf-4565-84a3-aa3d7bd16224")
+  => #<OpenStack::Volume::Snapshot:0x9a890b8 @id="0e76dacb-2fcf-4565-84a3-aa3d7bd16224", @display_name="marios_snapshot", @display_description=nil, @volume_id="3b38b570-a4ff-4444-984a-3566cbdc8ab2", @status="creating", @size=1, @created_at="2013-01-23T14:18:13.000000">
+
+  # Delete a snapshot:
+  >> vs.delete_snapshot("0e76dacb-2fcf-4565-84a3-aa3d7bd16224")
+  => true
 
 == Examples for Object-Store:
 
