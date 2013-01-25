@@ -45,6 +45,7 @@ module OpenStack
   require 'openstack/volume/connection'
   require 'openstack/volume/volume'
   require 'openstack/volume/snapshot'
+  require 'openstack/image/connection'
 
 
   # Constants that set limits on server creation

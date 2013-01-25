@@ -65,7 +65,9 @@ class Connection
           OpenStack::Swift::Connection.new(connection)
         when "volume"
           OpenStack::Volume::Connection.new(connection)
-        else
+        when "image"
+          OpenStack::Image::Connection.new(connection)
+       else
           raise Exception::InvalidArgument, "Invalid :service_type parameter: #{@service_type}"
       end
     end
