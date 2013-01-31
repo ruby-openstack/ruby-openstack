@@ -17,6 +17,7 @@ module Compute
     attr_reader   :metadata
     attr_accessor :adminPass
     attr_reader   :key_name
+    attr_reader   :created
     attr_reader   :security_groups
 
     # This class is the representation of a single Server object.  The constructor finds the server identified by the specified
@@ -64,6 +65,7 @@ module Compute
       @image   = data["image"] || data["imageId"]
       @flavor  = data["flavor"] || data["flavorId"]
       @key_name = data["key_name"] # if provider uses the keys API extension for accessing servers
+      @created = data["created"]
       @security_groups = (data["security_groups"] || []).inject([]){|res, c| res << c["id"]  ; res}
       true
     end
