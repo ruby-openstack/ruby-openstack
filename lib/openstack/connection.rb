@@ -282,7 +282,12 @@ class AuthV20
       raise OpenStack::Exception::NotImplemented.new("The requested service: \"#{connection.service_type}\" is not present " +
         "in the returned service catalogue.", 501, "#{resp_data["access"]["serviceCatalog"]}") unless implemented_services.include?(connection.service_type)
       resp_data['access']['serviceCatalog'].each do |service|
-        if service['type'] == connection.service_type
+          if connection.service_name
+            check_service_name = connection.service_name
+          else
+            check_service_name = service['name']
+          end
+          if service['type'] == connection.service_type and service['name'] == check_service_name
           endpoints = service["endpoints"]
           if connection.region
             endpoints.each do |ep|
