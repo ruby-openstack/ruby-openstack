@@ -21,6 +21,8 @@ class Connection
     attr_reader   :proxy_host
     attr_reader   :proxy_port
     attr_reader   :region
+    attr_reader   :regions_list #e.g. os.connection.regions_list == {"region-a.geo-1" => [ {:service=>"object-store", :versionId=>"1.0"}, {:service=>"identity", :versionId=>"2.0"}], "region-b.geo-1"=>[{:service=>"identity", :versionId=>"2.0"}] }
+
 
     attr_reader   :http
     attr_reader   :is_debug
@@ -83,6 +85,7 @@ class Connection
       @service_name = options[:service_name] || nil
       @service_type = options[:service_type] || "compute"
       @region = options[:region] || @region = nil
+      @regions_list = {} # this is populated during authentication - from the returned service catalogue
       @is_debug = options[:is_debug]
       auth_uri=nil
       begin
@@ -282,6 +285,10 @@ class AuthV20
       raise OpenStack::Exception::NotImplemented.new("The requested service: \"#{connection.service_type}\" is not present " +
         "in the returned service catalogue.", 501, "#{resp_data["access"]["serviceCatalog"]}") unless implemented_services.include?(connection.service_type)
       resp_data['access']['serviceCatalog'].each do |service|
+        service["endpoints"].each do |endpoint|
+          connection.regions_list[endpoint["region"]] ||= []
+          connection.regions_list[endpoint["region"]] << {:service=>service["type"], :versionId => endpoint["versionId"]}
+        end
         if service['type'] == connection.service_type
           endpoints = service["endpoints"]
           if connection.region
