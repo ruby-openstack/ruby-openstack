@@ -44,6 +44,16 @@ Other parameters for the create method:
   irb(main):006:0> os.containers
     => ["herpy_Foo_container", "derpy_bar_bucket"]
 
+  irb(main):003:0> os.connection.regions_list
+    => {"region-a.geo-1" => [ {:service=>"object-store", :versionId=>"1.0"}, {:service=>"identity", :versionId=>"2.0"}],
+        "region-b.geo-1"=>[{:service=>"identity", :versionId=>"2.0"}],
+        "az-2.region-a.geo-1"=>[{:service=>"image", :versionId=>"1.0"}, {:service=>"volume", :versionId=>"1.1"}, {:service=>"compute", :versionId=>"1.1"}],
+        "az-1.region-a.geo-1"=>[{:service=>"image", :versionId=>"1.0"}, {:service=>"volume", :versionId=>"1.1"}, {:service=>"compute", :versionId=>"1.1"}]}
+
+  irb(main):005:0> os.connection.regions_list["region-a.geo-1"]
+    => [{:service=>"object-store", :versionId=>"1.0"}, {:service=>"identity", :versionId=>"2.0"}]
+
+
 == Examples
 
 == For Compute:
