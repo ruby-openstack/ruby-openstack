@@ -179,7 +179,7 @@ module Compute
       data = JSON.generate(:createImage => options)
       response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
-      image_id = response["Location"].scan(/.*\/(.*)/).flatten
+      image_id = response["Location"].split("/images/").last
       OpenStack::Compute::Image.new(@compute, image_id)
     end
 
