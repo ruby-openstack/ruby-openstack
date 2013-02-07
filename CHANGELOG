@@ -1,3 +1,7 @@
+*Thu Feb 07 2013 Marios Andreou (marios@redhat.com) - 1.0.9
+  - various bug fixes/improvements: pull requests 20, 19, 18, 16
+  - adds 'regions_list' hash to connection object (see pull request 19)
+
 *Wed Jan 23 2013 Marios Andreou (marios@redhat.com) - 1.0.8
   - Adds support for storage snapshots
 
