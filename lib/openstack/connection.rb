@@ -188,6 +188,9 @@ class Connection
       data     = options[:data]
       attempts = options[:attempts] || 0
       path = @service_path + path
+      if method == 'PUT' and data.nil?
+        headers['Content-Length'] = "0"
+      end
       res = csreq(method,server,path,port,scheme,headers,data,attempts)
       if not res.code.match(/^20.$/)
         OpenStack::Exception.raise_exception(res)
