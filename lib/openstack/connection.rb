@@ -68,6 +68,8 @@ class Connection
           OpenStack::Volume::Connection.new(connection)
         when "image"
           OpenStack::Image::Connection.new(connection)
+        when "network"
+          OpenStack::Network::Connection.new(connection)
        else
           raise Exception::InvalidArgument, "Invalid :service_type parameter: #{@service_type}"
       end
