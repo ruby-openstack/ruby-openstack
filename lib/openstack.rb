@@ -46,8 +46,10 @@ module OpenStack
   require 'openstack/volume/volume'
   require 'openstack/volume/snapshot'
   require 'openstack/image/connection'
-
-
+  require 'openstack/network/connection'
+  require 'openstack/network/network'
+  require 'openstack/network/subnet'
+  require 'openstack/network/port'
   # Constants that set limits on server creation
   MAX_PERSONALITY_ITEMS = 5
   MAX_PERSONALITY_FILE_SIZE = 10240

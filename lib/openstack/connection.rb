@@ -68,6 +68,8 @@ class Connection
           OpenStack::Volume::Connection.new(connection)
         when "image"
           OpenStack::Image::Connection.new(connection)
+        when "network"
+          OpenStack::Network::Connection.new(connection)
        else
           raise Exception::InvalidArgument, "Invalid :service_type parameter: #{@service_type}"
       end
@@ -430,6 +432,8 @@ class Exception
   end
   class ResourceStateConflict       < ComputeError # :nodoc:
   end
+  class QuantumError                < ComputeError # :nodoc:
+  end
 
   # Plus some others that we define here
 
@@ -467,7 +471,7 @@ class Exception
           info=val
         end
         exception_class = self.const_get(fault[0,1].capitalize+fault[1,fault.length])
-        raise exception_class.new(info["message"], response.code, response.body)
+        raise exception_class.new((info["message"] || info), response.code, response.body)
       end
     rescue JSON::ParserError => parse_error
         deal_with_faulty_error(response, parse_error)
