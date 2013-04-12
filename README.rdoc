@@ -2,13 +2,13 @@
 
 == Description
 
-Ruby Openstack Compute, Object-Store and Block Storage bindings for the OpenStack API.
-
+Ruby Openstack Compute, Object-Store, Block Storage and Network (Quantum) bindings for the OpenStack API.
+a
 http://api.openstack.org/api-reference.html
 
 Currently supports both v1.0 and v2.0 (keystone) auth.
 
-Use OpenStack::Connection.create to get a handle to an OpenStack service - set the :service_type parameter to either 'compute' or 'object-store' (defaults to 'compute'). If the requested service is not deployed the gem will throw a OpenStack::Exception::NotImplemented (501) - e.g. :service_type is 'object-store' but swift service isn't deployed.
+Use OpenStack::Connection.create to get a handle to an OpenStack service - set the :service_type parameter to 'compute', 'object-store', 'volume' or 'network' (defaults to 'compute'). If the requested service is not deployed the gem will throw a OpenStack::Exception::NotImplemented (501) - e.g. :service_type is 'object-store' but swift service isn't deployed.
 
 The OpenStack::Connection.create class method is a factory constructor which will return the appropriate Connection object, depending on the ':service_type' parameter passed with the options hash: set to either 'compute', 'volume', or  'object-store' (defaults to 'compute') - see below for examples.
 
@@ -367,9 +367,59 @@ See the class definitions for documentation on specific methods and operations.
   => OpenStack::Exception::ItemNotFound: The resource could not be found
 
 
+== Examples for Network (Quantum):
+
+  quantum = OpenStack::Connection.create({:username => "admin",  :api_key=>"le-password", :auth_method=>"password",  :auth_url => "http://192.168.1.21:5000/v2.0/", :authtenant_name =>"admin",  :service_type=>"network"})
+
+  #Create a network:
+  >> net2 = quantum.create_network("my_net")
+  => #<OpenStack::Network::Network:0xa8aff70 @id="6b09a5b3-02d3-4996-9933-4792bd4ca11e",@name="my_net", @admin_state_up=true, @status="ACTIVE", @subnets=[], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">
+
+  #List networks:
+  >> quantum.networks
+  => [#<OpenStack::Network::Network:0xa7c8f94 @id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="net_1363343212", @admin_state_up=true, @status="ACTIVE",
+@subnets=["34ea9f1e-d71a-48bd-89b0-af2f5c051912","7780f890-8334-43a1-934c-f1ce5edc4561"], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">, #<OpenStack::Network::Network:0xa7c8ef4 @id="1cfad632-3473-4c5b-b2d3-405cc3093286", @name="net_1363344435", @admin_state_up=true, @status="ACTIVE", @subnets=["c4293c24-07d0-47dc-bead-ec8d3934b8db"], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">]
+
+  >> net1 = quantum.network("b4abfaff-9e24-4192-9219-a4a60819aba2")
+  => #<OpenStack::Network::Network:0xa7f28e4 @id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="net_1363343212", @admin_state_up=true, @status="ACTIVE", @subnets=["34ea9f1e-d71a-48bd-89b0-af2f5c051912", "7780f890-8334-43a1-934c-f1ce5edc4561"], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">
+
+  #Delete a Network:
+  >> quantum.delete_network("6b09a5b3-02d3-4996-9933-4792bd4ca11e")
+  => true
+
+  #Create a Subnet:
+  >> subnet1 = quantum.create_subnet("b4abfaff-9e24-4192-9219-a4a60819aba2","192.168.1.0/24")
+  => #<OpenStack::Network::Subnet:0xa772a2c @id="e978da1c-9c95-4e58-b4b6-4dcce4640a7f", @network_id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="", @ip_version=4, @cidr="192.168.1.0/24", @gateway_ip="192.168.1.1", @dns_nameservers=[], @allocation_pools=[{"start"=>"192.168.1.2", "end"=>"192.168.1.254"}], @host_routes=[], @enable_dhcp=true, @tenant_id="7be215d541ea4db4a23b3a84b0882408">
+
+  #List Subnets:
+  >> quantum.subnets
+  => [#<OpenStack::Network::Subnet:0xa850958 @id="34ea9f1e-d71a-48bd-89b0-af2f5c051912", @network_id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="", @ip_version=4, @cidr="123.123.0.0/16", @gateway_ip="123.123.0.1", @dns_nameservers=[], @allocation_pools=[{"start"=>"123.123.0.2", "end"=>"123.123.255.254"}], @host_routes=[], @enable_dhcp=true, @tenant_id="7be215d541ea4db4a23b3a84b0882408">, #<OpenStack::Network::Subnet:0xa850868 @id="7780f890-8334-43a1-934c-f1ce5edc4561", @network_id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="", @ip_version=4, @cidr="192.168.1.0/24", @gateway_ip="192.168.1.1", @dns_nameservers=[], @allocation_pools=[{"start"=>"192.168.1.2", "end"=>"192.168.1.254"}], @host_routes=[], @enable_dhcp=true, @tenant_id="7be215d541ea4db4a23b3a84b0882408">]
+
+  >> subnet1 = quantum.subnet("34ea9f1e-d71a-48bd-89b0-af2f5c051912")
+  => #<OpenStack::Network::Subnet:0xa88ec1c @id="34ea9f1e-d71a-48bd-89b0-af2f5c051912", @network_id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="", @ip_version=4, @cidr="123.123.0.0/16", @gateway_ip="123.123.0.1", @dns_nameservers=[], @allocation_pools=[{"start"=>"123.123.0.2", "end"=>"123.123.255.254"}], @host_routes=[], @enable_dhcp=true, @tenant_id="7be215d541ea4db4a23b3a84b0882408">
+
+  #Delete a Subnet:
+  >> quantum.delete_subnet("89136e4d-da26-4495-9384-0fd1309e274a")
+  => true
+
+  #Create a Port:
+  >> created_port = quantum.create_port(network.id, {"fixed_ips"=>[{"subnet_id"=>subnet.id}], "device_id"=>machine.id})
+  => #<OpenStack::Network::Port:0x95a833c @id="d601db9e-c936-4811-904a-bb5a27d105f3", @network_id="c4dfe90e-a7ce-41f7-b9b2-2f9773f42a6b", @name="", @admin_state_up=true, @status="ACTIVE", @mac_address="fa:16:3e:f4:e8:bc", @fixed_ips=[{"subnet_id"=>"f78bfc05-ead0-40a6-8325-a35eb2b535c3", "ip_address"=>"10.0.0.4"}], @device_id="fe4022fa-a77c-4adf-be45-6e069fb3a314", @device_owner="", @tenant_id="7be215d541ea4db4a23b3a84b0882408">
+
+  #List Ports:
+  >> quantum.ports
+  => [#<OpenStack::Network::Port:0xa73bdd8 @id="f0db2c95-9449-4eb3-8b12-c66b23c8de41", @network_id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="", @admin_state_up=true, @status="ACTIVE", @mac_address="fa:16:3e:7e:e0:1b", @fixed_ips=[{"subnet_id"=>"34ea9f1e-d71a-48bd-89b0-af2f5c051912", "ip_address"=>"123.123.0.2"}], @device_id="4357665c-e2fe-4bf0-8a69-b531d11add2d", @device_owner="compute:nova", @tenant_id="7be215d541ea4db4a23b3a84b0882408">, #<OpenStack::Network::Port:0xa73bcac @id="93c210cd-b086-49e1-aa12-d207aa28a981", @network_id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="", @admin_state_up=true, @status="ACTIVE", @mac_address="fa:16:3e:08:eb:92", @fixed_ips=[{"subnet_id"=>"34ea9f1e-d71a-48bd-89b0-af2f5c051912", "ip_address"=>"123.123.0.3"}], @device_id="5a114ba2-4f49-4655-93f9-96954632cb67", @device_owner="compute:nova", @tenant_id="7be215d541ea4db4a23b3a84b0882408">]
+
+  >> port1 = quantum.port("f0db2c95-9449-4eb3-8b12-c66b23c8de41")
+  => #<OpenStack::Network::Port:0xa70f51c @id="f0db2c95-9449-4eb3-8b12-c66b23c8de41", @network_id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="", @admin_state_up=true, @status="ACTIVE", @mac_address="fa:16:3e:7e:e0:1b", @fixed_ips=[{"subnet_id"=>"34ea9f1e-d71a-48bd-89b0-af2f5c051912", "ip_address"=>"123.123.0.2"}], @device_id="4357665c-e2fe-4bf0-8a69-b531d11add2d", @device_owner="compute:nova", @tenant_id="7be215d541ea4db4a23b3a84b0882408">
+
+  #Delete a Port:
+  >> quantum.delete_port("f0db2c95-9449-4eb3-8b12-c66b23c8de41")
+  => true
+
 == Authors
 
-By Dan Prince <dprince@redhat.com>, Naveed Massjouni <naveedm9@gmail.com>, Marios Andreou <marios@redhat.com>
+By Marios Andreou (marios@redhat.com), Dan Prince <dprince@redhat.com>, Naveed Massjouni <naveedm9@gmail.com>
 
 Initial code checkin on May 23rd 2012 - code refactored from and based on the Rackspace Cloud Servers gem
 (https://github.com/rackspace/ruby-openstack-compute) and Rackspace Cloud Files gem (https://github.com/rackspace/ruby-cloudfiles).

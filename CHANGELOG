@@ -1,3 +1,7 @@
+*Fri Apr 12 2013 Marios Andreou (marios@redhat.com) - 1.1.0
+  - adds Quantum support - see pull request 23
+  - bugfix for nginx support with 0length content body (pull request 22)
+
 *Thu Feb 07 2013 Marios Andreou (marios@redhat.com) - 1.0.9
   - various bug fixes/improvements: pull requests 20, 19, 18, 16
   - adds 'regions_list' hash to connection object (see pull request 19)
