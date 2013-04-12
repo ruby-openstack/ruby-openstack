@@ -127,7 +127,7 @@ module Swift
       raise OpenStack::Exception::InvalidArgument.new("Container name cannot contain '/'") if containername.match("/")
       raise OpenStack::Exception::InvalidArgument.new("Container name is limited to 256 characters") if containername.length > 256
       path = "/#{URI.encode(containername.to_s)}"
-      @connection.req("PUT", path)
+      @connection.req("PUT", path, {:headers=>{"Content-Length"=>"0"}})
       OpenStack::Swift::Container.new(self, containername)
     end
 
