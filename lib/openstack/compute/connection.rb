@@ -42,8 +42,12 @@ module Compute
     #   => [{:name=>"demo-standingcloud-lts", :id=>168867},
     #       {:name=>"demo-aicache1", :id=>187853}]
     def list_servers(options = {})
-      anti_cache_param="cacheid=#{Time.now.to_i}"
-      path = OpenStack.paginate(options).empty? ? "#{@connection.service_path}/servers?#{anti_cache_param}" : "#{@connection.service_path}/servers?#{OpenStack.paginate(options)}&#{anti_cache_param}"
+      pagination = OpenStack.paginate(options)
+      pagination = nil if pagination.empty?
+      all_tenants = options[:all_tenants] ? "all_tenants=True" : nil
+      anti_cache_param = "cacheid=#{Time.now.to_i}"
+      params = [pagination, all_tenants, anti_cache_param].flatten.join("&")
+      path = "#{@connection.service_path}/servers?#{params}"
       response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       OpenStack.symbolize_keys(JSON.parse(response.body)["servers"])
@@ -62,12 +66,25 @@ module Compute
     #   => [{:status=>"ACTIVE", :imageRef=>10, :progress=>100, :metadata=>{}, :addresses=>{:public=>["x.x.x.x"], :private=>["x.x.x.x"]}, :name=>"demo-standingcloud-lts", :id=>168867, :flavorRef=>1, :hostId=>"xxxxxx"},
     #       {:status=>"ACTIVE", :imageRef=>8, :progress=>100, :metadata=>{}, :addresses=>{:public=>["x.x.x.x"], :private=>["x.x.x.x"]}, :name=>"demo-aicache1", :id=>187853, :flavorRef=>3, :hostId=>"xxxxxx"}]
     def list_servers_detail(options = {})
-      path = OpenStack.paginate(options).empty? ? "#{@connection.service_path}/servers/detail" : "#{@connection.service_path}/servers/detail?#{OpenStack.paginate(options)}"
+      pagination = OpenStack.paginate(options)
+      pagination = nil if pagination.empty?
+      all_tenants = options[:all_tenants] ? "all_tenants=True" : nil
+      params = [pagination, all_tenants].flatten.join("&")
+      path = "#{@connection.service_path}/servers/detail?#{params}"
       response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       json_server_list = JSON.parse(response.body)["servers"]
       json_server_list.each do |server|
         server["addresses"] = OpenStack::Compute::Address.fix_labels(server["addresses"])
+        #"fix" the extended attrs - if present,
+        #os_ext_sts_power_state "OS-EXT-STS:power_state", os_ext_sts_task_state "OS-EXT-STS:task_state"
+        #os_ext_sts_vm_state "OS-EXT-STS:vm_state", etc as below
+        server["os_ext_sts_power_state"] = server.delete("OS-EXT-STS:power_state")
+        server["os_ext_sts_task_state"] =  server.delete("OS-EXT-STS:task_state")
+        server["os_ext_sts_vm_state"] =  server.delete("OS-EXT-STS:vm_state")
+        server["os_ext_srv_attr_host"] = server.delete("OS-EXT-SRV-ATTR:host")
+        server["os_ext_srv_attr_hypervisor_hostname"] = server.delete("OS-EXT-SRV-ATTR:hypervisor_hostname")
+        server["os_ext_srv_attr_instance_name"] = server.delete("OS-EXT-SRV-ATTR:instance_name")
       end
       OpenStack.symbolize_keys(json_server_list)
     end
@@ -407,6 +424,50 @@ module Compute
       response = @connection.req("DELETE", "/servers/#{server_id}/os-volume_attachments/#{attachment_id}")
       true
     end
+
+    #HOSTS extension, os-hosts (see http://api.openstack.org/api-ref.htm)
+    def hosts
+      error_if_not_supported("os-hosts")
+      response = @connection.req("GET", "/os-hosts")
+      hosts = JSON.parse(response.body)["hosts"]
+      hosts.inject([]){|res, cur| res << OpenStack::Compute::Host.new(cur) ;res}
+    end
+    alias :list_hosts :hosts
+
+    # [{:cpu=>1, :disk_gb=> 1024, :host => 123, :memory_mb =>1, :project=>"foo" }, ]
+    def host_details(host_name)
+      error_if_not_supported("os-hosts")
+      response = @connection.req("GET", "/os-hosts/#{host_name}")
+      details_hash = JSON.parse(response.body["host"])
+      details_hash.inject([]){|res, cur| res << OpenStack.symbolize_keys(cur["resource"]); res}
+    end
+    alias :get_host_details :host_details
+
+    #params are hash of :status and :maintenance_mode - valid values for both are ["enable"|"disable"]
+    def manage_host(host_name, params={:status=>"enable", :maintenance_mode=>"disable"})
+      error_if_not_supported("os-hosts")
+      data = JSON.generate(:status => params[:status], :maintenance_mode => params[:maintenance_mode])
+      res = @connection.req("PUT", "/os-hosts/#{host_name}", {:data => data})
+      OpenStack.symbolize_keys(JSON.parse(res.body))
+    end
+
+    def shutdown_host(host_name)
+      error_if_not_supported("os-hosts")
+      res = @connection.req("GET", "/os-hosts/#{host_name}/shutdown")
+      OpenStack.symboilze_keys(JSON.parse(res.body))
+    end
+
+    def reboot_host(host_name)
+      error_if_not_supported("os-hosts")
+      res = @connection.req("GET", "/os-hosts/#{host_name}/reboot")
+      OpenStack.symbolize_keys(JSON.parse(res.body))
+    end
+
+    private
+    def error_if_not_supported(extension)
+      raise OpenStack::Exception::NotImplemented.new("#{extension} not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"#{extension}"]
+    end
+
   end
 end
 end

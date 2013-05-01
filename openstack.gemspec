@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Dan Prince", "Marios Andreou"]
-  s.date = "2013-03-21"
+  s.date = "2013-05-01"
   s.description = "API Binding for OpenStack"
   s.email = ["dprince@redhat.com", "marios@redhat.com"]
   s.extra_rdoc_files = [
@@ -23,6 +23,7 @@ Gem::Specification.new do |s|
     "lib/openstack/compute/address.rb",
     "lib/openstack/compute/connection.rb",
     "lib/openstack/compute/flavor.rb",
+    "lib/openstack/compute/host.rb",
     "lib/openstack/compute/image.rb",
     "lib/openstack/compute/metadata.rb",
     "lib/openstack/compute/personalities.rb",

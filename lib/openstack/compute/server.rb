@@ -20,6 +20,16 @@ module Compute
     attr_reader   :created
     attr_reader   :security_groups
 
+    #extension attrs - only available if "server extended status" extension is available
+    #grep "Server Extended Status" @ http://api.openstack.org/api-ref.html
+    attr_reader   :os_ext_sts_power_state
+    attr_reader   :os_ext_sts_task_state
+    attr_reader   :os_ext_sts_vm_state
+    #grep "Server Extended Attributes" @ http://api.openstack.org/api-ref.html
+    attr_reader   :os_ext_srv_attr_host
+    attr_reader   :os_ext_srv_attr_hypervisor_hostname
+    attr_reader   :os_ext_srv_attr_instance_name
+
     # This class is the representation of a single Server object.  The constructor finds the server identified by the specified
     # ID number, accesses the API via the populate method to get information about that server, and returns the object.
     #
@@ -67,6 +77,12 @@ module Compute
       @key_name = data["key_name"] # if provider uses the keys API extension for accessing servers
       @created = data["created"]
       @security_groups = (data["security_groups"] || []).inject([]){|res, c| res << c["id"]  ; res}
+      @os_ext_sts_power_state = data["OS-EXT-STS:power_state"]
+      @os_ext_sts_task_state = data["OS-EXT-STS:task_state"]
+      @os_ext_sts_vm_state = data["OS-EXT-STS:vm_state"]
+      @os_ext_srv_attr_host = data["OS-EXT-SRV-ATTR:host"]
+      @os_ext_srv_attr_hypervisor_hostname = data["OS-EXT-SRV-ATTR:hypervisor_hostname"]
+      @os_ext_srv_attr_instance_name = data["OS-EXT-SRV-ATTR:instance_name"]
       true
     end
     alias :refresh :populate
