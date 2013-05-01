@@ -42,8 +42,13 @@ module Compute
     #   => [{:name=>"demo-standingcloud-lts", :id=>168867},
     #       {:name=>"demo-aicache1", :id=>187853}]
     def list_servers(options = {})
-      anti_cache_param="cacheid=#{Time.now.to_i}"
-      path = OpenStack.paginate(options).empty? ? "#{@connection.service_path}/servers?#{anti_cache_param}" : "#{@connection.service_path}/servers?#{OpenStack.paginate(options)}&#{anti_cache_param}"
+      pagination = OpenStack.paginate(options)
+      pagination = nil if pagination.empty?
+      all_tenants = options[:all_tenants] ? "all_tenants=True" : nil
+      anti_cache_param = "cacheid=#{Time.now.to_i}"
+      params = [pagination, all_tenants, anti_cache_param].flatten.join("&")
+
+      path = "#{@connection.service_path}/servers?#{params}"
       response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       OpenStack.symbolize_keys(JSON.parse(response.body)["servers"])
@@ -62,7 +67,12 @@ module Compute
     #   => [{:status=>"ACTIVE", :imageRef=>10, :progress=>100, :metadata=>{}, :addresses=>{:public=>["x.x.x.x"], :private=>["x.x.x.x"]}, :name=>"demo-standingcloud-lts", :id=>168867, :flavorRef=>1, :hostId=>"xxxxxx"},
     #       {:status=>"ACTIVE", :imageRef=>8, :progress=>100, :metadata=>{}, :addresses=>{:public=>["x.x.x.x"], :private=>["x.x.x.x"]}, :name=>"demo-aicache1", :id=>187853, :flavorRef=>3, :hostId=>"xxxxxx"}]
     def list_servers_detail(options = {})
-      path = OpenStack.paginate(options).empty? ? "#{@connection.service_path}/servers/detail" : "#{@connection.service_path}/servers/detail?#{OpenStack.paginate(options)}"
+      pagination = OpenStack.paginate(options)
+      pagination = nil if pagination.empty?
+      all_tenants = options[:all_tenants] ? "all_tenants=True" : nil
+      params = [pagination, all_tenants].flatten.join("&")
+
+      path = "#{@connection.service_path}/servers?#{params}"
       response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       json_server_list = JSON.parse(response.body)["servers"]
