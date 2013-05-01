@@ -39,6 +39,7 @@ module OpenStack
   require 'openstack/compute/flavor'
   require 'openstack/compute/address'
   require 'openstack/compute/personalities'
+  require 'openstack/compute/host'
   require 'openstack/swift/connection'
   require 'openstack/swift/container'
   require 'openstack/swift/storage_object'

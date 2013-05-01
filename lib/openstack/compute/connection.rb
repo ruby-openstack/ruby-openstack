@@ -68,6 +68,15 @@ module Compute
       json_server_list = JSON.parse(response.body)["servers"]
       json_server_list.each do |server|
         server["addresses"] = OpenStack::Compute::Address.fix_labels(server["addresses"])
+        #"fix" the extended attrs - if present,
+        #os_ext_sts_power_state "OS-EXT-STS:power_state", os_ext_sts_task_state "OS-EXT-STS:task_state"
+        #os_ext_sts_vm_state "OS-EXT-STS:vm_state", etc as below
+        server["os_ext_sts_power_state"] = server.delete("OS-EXT-STS:power_state")
+        server["os_ext_sts_task_state"] =  server.delete("OS-EXT-STS:task_state")
+        server["os_ext_sts_vm_state"] =  server.delete("OS-EXT-STS:vm_state")
+        server["os_ext_srv_attr_host"] = server.delete("OS-EXT-SRV-ATTR:host")
+        server["os_ext_srv_attr_hypervisor_hostname"] = server.delete("OS-EXT-SRV-ATTR:hypervisor_hostname")
+        server["os_ext_srv_attr_instance_name"] = server.delete("OS-EXT-SRV-ATTR:instance_name")
       end
       OpenStack.symbolize_keys(json_server_list)
     end
@@ -407,6 +416,50 @@ module Compute
       response = @connection.req("DELETE", "/servers/#{server_id}/os-volume_attachments/#{attachment_id}")
       true
     end
+
+    #HOSTS extension, os-hosts (see http://api.openstack.org/api-ref.htm)
+    def hosts
+      error_if_not_supported("os-hosts")
+      response = @connection.req("GET", "/os-hosts")
+      hosts = JSON.parse(response.body)["hosts"]
+      hosts.inject([]){|res, cur| res << OpenStack::Compute::Host.new(cur) ;res}
+    end
+    alias :list_hosts :hosts
+
+    # [{:cpu=>1, :disk_gb=> 1024, :host => 123, :memory_mb =>1, :project=>"foo" }, ]
+    def host_details(host_name)
+      error_if_not_supported("os-hosts")
+      response = @connection.req("GET", "/os-hosts/#{host_name}")
+      details_hash = JSON.parse(response.body["host"])
+      details_hash.inject([]){|res, cur| res << OpenStack.symbolize_keys(cur["resource"]); res}
+    end
+    alias :get_host_details :host_details
+
+    #params are hash of :status and :maintenance_mode - valid values for both are ["enable"|"disable"]
+    def manage_host(host_name, params={:status=>"enable", :maintenance_mode=>"disable"})
+      error_if_not_supported("os-hosts")
+      data = JSON.generate(:status => params[:status], :maintenance_mode => params[:maintenance_mode])
+      res = @connection.req("PUT", "/os-hosts/#{host_name}", {:data => data})
+      OpenStack.symbolize_keys(JSON.parse(res.body))
+    end
+
+    def shutdown_host(host_name)
+      error_if_not_supported("os-hosts")
+      res = @connection.req("GET", "/os-hosts/#{host_name}/shutdown")
+      OpenStack.symboilze_keys(JSON.parse(res.body))
+    end
+
+    def reboot_host(host_name)
+      error_if_not_supported("os-hosts")
+      res = @connection.req("GET", "/os-hosts/#{host_name}/reboot")
+      OpenStack.symbolize_keys(JSON.parse(res.body))
+    end
+
+    private
+    def error_if_not_supported(extension)
+      raise OpenStack::Exception::NotImplemented.new("#{extension} not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"#{extension}"]
+    end
+
   end
 end
 end
