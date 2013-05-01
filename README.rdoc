@@ -205,6 +205,19 @@ See the class definitions for documentation on specific methods and operations.
   >> os.detach_volume(704289, 90805)
   => true
 
+=== Hosts Compute Extension:
+  # Get info on all hosts:
+  >> os.hosts
+  => [#<OpenStack::Compute::Host:0x9bed5a8 @host_name="svr.name.com", @service="compute", @zone=nil>, #<OpenStack::Compute::Host:0x9bed4e0 @host_name="svr.name.com", @service="cert", @zone=nil>, #<OpenStack::Compute::Host:0x9bed418 @host_name="svr.name.com", @service="consoleauth", @zone=nil>, #<OpenStack::Compute::Host:0x9bed33c @host_name="svr.name.com", @service="scheduler", @zone=nil>, #<OpenStack::Compute::Host:0x9bed2d8 @host_name="svr.name.com", @service="network", @zone=nil>, #<OpenStack::Compute::Host:0x9bed1e8 @host_name="svr.name.com", @service="console", @zone=nil>, #<OpenStack::Compute::Host:0x9bed10c @host_name="svr.name.com", @service="volume", @zone=nil>]
+
+  # Get details for a specific host:
+  >> os.host_details("svr.name.com")
+  => [{:cpu=>1, :disk_gb=> 1024, :host => 123, :memory_mb =>1, :project=>"foo"}, {:cpu=>2, :disk_gb=> 1024, :host => 123, :memory_mb =>2, :project=>"bar" }]
+
+  >> os.manage_host(host_name, {:status => "enable", :maintenance_mode=>"disable"})
+  >> os.shutdown_host(host_name)
+  >> os.reboot_host(host_name)
+
 == Examples for Volumes and Snaphots:
 
   #NOTE - attach/detach operations are implemented for the compute service as the OS API defines these operations as extensions to Openstack Compute.
@@ -377,8 +390,7 @@ See the class definitions for documentation on specific methods and operations.
 
   #List networks:
   >> quantum.networks
-  => [#<OpenStack::Network::Network:0xa7c8f94 @id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="net_1363343212", @admin_state_up=true, @status="ACTIVE",
-@subnets=["34ea9f1e-d71a-48bd-89b0-af2f5c051912","7780f890-8334-43a1-934c-f1ce5edc4561"], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">, #<OpenStack::Network::Network:0xa7c8ef4 @id="1cfad632-3473-4c5b-b2d3-405cc3093286", @name="net_1363344435", @admin_state_up=true, @status="ACTIVE", @subnets=["c4293c24-07d0-47dc-bead-ec8d3934b8db"], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">]
+  => [#<OpenStack::Network::Network:0xa7c8f94 @id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="net_1363343212", @admin_state_up=true, @status="ACTIVE",@subnets=["34ea9f1e-d71a-48bd-89b0-af2f5c051912","7780f890-8334-43a1-934c-f1ce5edc4561"], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">, #<OpenStack::Network::Network:0xa7c8ef4 @id="1cfad632-3473-4c5b-b2d3-405cc3093286", @name="net_1363344435", @admin_state_up=true, @status="ACTIVE", @subnets=["c4293c24-07d0-47dc-bead-ec8d3934b8db"], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">]
 
   >> net1 = quantum.network("b4abfaff-9e24-4192-9219-a4a60819aba2")
   => #<OpenStack::Network::Network:0xa7f28e4 @id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="net_1363343212", @admin_state_up=true, @status="ACTIVE", @subnets=["34ea9f1e-d71a-48bd-89b0-af2f5c051912", "7780f890-8334-43a1-934c-f1ce5edc4561"], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">
