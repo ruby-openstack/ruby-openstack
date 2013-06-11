@@ -127,6 +127,8 @@ See the class definitions for documentation on specific methods and operations.
                               :namespace=>"http://docs.openstack.org/ext/floating_ips/api/v1.1", :name=>"Floating_ips", :alias=>"os-floating-ips"},
         ... }
 
+==== Compute API keypairs extension
+
   # Get list of keypairs for current tenant/account:
   >> os.keypairs
   => { :key_one => {  :fingerprint  =>  "3f:12:4d:d1:54:f1:f4:3f:fe:a8:12:ec:1a:fb:35:b2",
@@ -155,6 +157,8 @@ See the class definitions for documentation on specific methods and operations.
   # Delete Keypair:
   >> os.delete_keypair("test_key_imported")
   => true
+
+==== Compute API security groups extension
 
   # List all security groups:
   >> os.security_groups
@@ -191,6 +195,8 @@ See the class definitions for documentation on specific methods and operations.
   >>  os.delete_security_group(9571)
   => true
 
+==== Compute API volumes extension:
+
   #Attach a volume to a server - params in order are: server_id, volume_id, attachment_point
 
   >> os.attach_volume(704289, 90805, "/dev/sde")
@@ -204,6 +210,33 @@ See the class definitions for documentation on specific methods and operations.
   #Detach volume from server - params in order are server_id and attachment_id
   >> os.detach_volume(704289, 90805)
   => true
+
+==== Compute API floating IPs extension:
+
+  #List all floating IPs
+  irb(main):003:0> nova.get_floating_ips
+  => [#<OpenStack::Compute::FloatingIPAddress:0x000000031d07b0 @fixed_ip=nil, @id=3714, @instance_id=nil, @ip="15.185.110.129", @pool=nil>, #<OpenStack::Compute::FloatingIPAddress:0x00000003210478 @fixed_ip=nil, @id=4034, @instance_id=nil, @ip="15.185.111.193", @pool=nil>]
+
+  #Get a specific floating IP:
+  irb(main):004:0> nova.get_floating_ip(4034)
+  => #<OpenStack::Compute::FloatingIPAddress:0x00000002349958 @fixed_ip=nil, @id=4034, @instance_id=nil, @ip="15.185.111.193", @pool=nil>
+
+  #Create floating IP - optionally specifying 'pool' as {:pool=>"foo"}
+  irb(main):003:0> addr = nova.create_floating_ip
+  => #<OpenStack::Compute::FloatingIPAddress:0x00000001882c68 @fixed_ip=nil, @id=3932, @instance_id=nil, @ip="15.185.111.91", @pool=nil>
+
+  #Delete a floating IP by ID:
+  irb(main):004:0> nova.delete_floating_ip(addr.id)
+  => true
+
+  #Attach floating IP to running server - hash param speciried :server_id and :ip_id
+  irb(main):014:0> nova.attach_floating_ip({:server_id=>"73c12492-e966-4af0-a5e9-b5d1e436fe61", :ip_id=>"3932"})
+  => true
+
+  #Detach floating IP from server - hash param as above for attach
+  irb(main):014:0> nova.detach_floating_ip({:server_id=>"73c12492-e966-4af0-a5e9-b5d1e436fe61", :ip_id=>"3932"})
+  => true
+
 
 == Examples for Volumes and Snaphots:
 
