@@ -60,6 +60,23 @@ module Compute
       end
     end
 
+  end
+
+  class FloatingIPAddress
+
+    attr_reader :fixed_ip
+    attr_reader :id
+    attr_reader :instance_id
+    attr_reader :ip
+    attr_reader :pool
+
+    def initialize(addr_hash)
+      @fixed_ip = addr_hash["fixed_ip"]
+      @id = addr_hash["id"]
+      @instance_id = addr_hash["instance_id"]
+      @ip = addr_hash["ip"]
+      @pool = addr_hash["pool"]
+    end
 
 
   end
