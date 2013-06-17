@@ -95,6 +95,19 @@ module Compute
       self.reboot("HARD")
     end
 
+    # Sends an API request to suspend this server. 
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.suspend
+    #   => true
+    def suspend
+      data = JSON.generate(:suspend => nil)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
     # Updates various parameters about the server.  Currently, the only operations supported are changing the server name (not the actual hostname
     # on the server, but simply the label in the Servers API) and the administrator password (note: changing the admin password will trigger
     # a reboot of the server).  Other options are ignored.  One or both key/value pairs may be provided.  Keys are case-sensitive.
