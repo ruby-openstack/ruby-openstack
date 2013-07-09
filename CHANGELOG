@@ -1,3 +1,7 @@
+*Tue Jul 09 2013 Marios Andreou (marios@redhat.com) - 1.1.1
+  - Adds floating-ips support ("os-floating-ips" extension for nova) - pull 28
+  - Add 'status' attribute to volume object - pull 29
+
 *Fri Apr 12 2013 Marios Andreou (marios@redhat.com) - 1.1.0
   - adds Quantum support - see pull request 23
   - bugfix for nginx support with 0length content body (pull request 22)
