@@ -18,7 +18,6 @@
 
 module OpenStack
 
-  VERSION = IO.read(File.dirname(__FILE__) + '/../VERSION')
   require 'net/http'
   require 'net/https'
   require 'uri'
@@ -50,6 +49,7 @@ module OpenStack
   require 'openstack/network/network'
   require 'openstack/network/subnet'
   require 'openstack/network/port'
+  require 'openstack/version'
   # Constants that set limits on server creation
   MAX_PERSONALITY_ITEMS = 5
   MAX_PERSONALITY_FILE_SIZE = 10240
