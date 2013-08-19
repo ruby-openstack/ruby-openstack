@@ -12,6 +12,7 @@ class Connection
     attr_accessor :service_path
     attr_accessor :service_port
     attr_accessor :service_scheme
+    attr_reader   :retries
     attr_reader   :auth_host
     attr_reader   :auth_port
     attr_reader   :auth_scheme
@@ -78,6 +79,7 @@ class Connection
     private_class_method :new
 
     def initialize(options = {:retry_auth => true})
+      @retries = options[:retries] || 3
       @authuser = options[:username] || (raise Exception::MissingArgument, "Must supply a :username")
       @authkey = options[:api_key] || (raise Exception::MissingArgument, "Must supply an :api_key")
       @auth_url = options[:auth_url] || (raise Exception::MissingArgument, "Must supply an :auth_url")
@@ -191,11 +193,8 @@ class Connection
       attempts = options[:attempts] || 0
       path = @service_path + path
       res = csreq(method,server,path,port,scheme,headers,data,attempts)
-      if not res.code.match(/^20.$/)
-        OpenStack::Exception.raise_exception(res)
-      end
-      return res
-    end;
+      res.code.match(/^20.$/) ? (return res) : OpenStack::Exception.raise_exception(res)
+    end
 
     private
 
@@ -212,6 +211,10 @@ class Connection
 
     # Starts (or restarts) the HTTP connection
     def start_http(server,path,port,scheme,headers) # :nodoc:
+
+      tries = @retries
+      time = 3
+
       if (@http[server].nil?)
         begin
           @http[server] = Net::HTTP::Proxy(@proxy_host, @proxy_port).new(server,port)
@@ -221,6 +224,9 @@ class Connection
           end
           @http[server].start
         rescue
+          puts "Can't connect to the server: #{tries} tries to reconnect" if @is_debug
+          sleep time += 1
+          retry unless (tries -= 1) <= 0
           raise OpenStack::Exception::Connection, "Unable to connect to #{server}"
         end
       end
@@ -254,6 +260,10 @@ class AuthV20
   attr_reader :uri
   attr_reader :version
   def initialize(connection)
+
+    tries = connection.retries
+    time = 3
+
     begin
       server = Net::HTTP::Proxy(connection.proxy_host, connection.proxy_port).new(connection.auth_host, connection.auth_port)
       if connection.auth_scheme == "https"
@@ -262,7 +272,10 @@ class AuthV20
       end
       server.start
     rescue
-      raise OpenStack::Exception::Connection, "Unable to connect to #{server}"
+      puts "Can't connect to the server: #{tries} tries  to reconnect" if connection.is_debug
+      sleep time += 1
+      retry unless (tries -= 1) <= 0
+      raise OpenStack::Exception::Connection, "Unable to connect to  #{server}"
     end
 
     @uri = String.new
@@ -347,6 +360,10 @@ end
 class AuthV10
 
   def initialize(connection)
+
+    tries = connection.retries
+    time = 3
+
     hdrhash = { "X-Auth-User" => connection.authuser, "X-Auth-Key" => connection.authkey }
     begin
       server = Net::HTTP::Proxy(connection.proxy_host, connection.proxy_port).new(connection.auth_host, connection.auth_port)
@@ -356,9 +373,14 @@ class AuthV10
       end
       server.start
     rescue
+      puts "Can't connect to the server: #{tries} tries  to reconnect" if connection.is_debug
+      sleep time += 1
+      retry unless (tries -= 1) <= 0
       raise OpenStack::Exception::Connection, "Unable to connect to #{server}"
     end
+
     response = server.get(connection.auth_path, hdrhash)
+
     if (response.code =~ /^20./)
       connection.authtoken = response["x-auth-token"]
       case connection.service_type
