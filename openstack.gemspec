@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.files = [
     "COPYING",
     "README.rdoc",
-    "VERSION",
+    "lib/openstack/version.rb",
     "lib/openstack.rb",
     "lib/openstack/compute/address.rb",
     "lib/openstack/compute/connection.rb",
@@ -55,18 +55,19 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_development_dependency(%q<mocha>, [">= 0"])
-      s.add_development_dependency(%q<test-unit>, [">= 0"])
-      s.add_runtime_dependency(%q<json>, [">= 0"])
+      s.add_development_dependency('mocha')
+      s.add_development_dependency('rake')
+      s.add_development_dependency('test-unit')
+      s.add_runtime_dependency('json')
     else
-      s.add_dependency(%q<mocha>, [">= 0"])
-      s.add_dependency(%q<test-unit>, [">= 0"])
-      s.add_dependency(%q<json>, [">= 0"])
+      s.add_dependency('mocha')
+      s.add_dependency('test-unit')
+      s.add_dependency('json')
     end
   else
-    s.add_dependency(%q<mocha>, [">= 0"])
-    s.add_dependency(%q<test-unit>, [">= 0"])
-    s.add_dependency(%q<json>, [">= 0"])
+    s.add_dependency('mocha')
+    s.add_dependency('test-unit')
+    s.add_dependency('json')
   end
 end
 
