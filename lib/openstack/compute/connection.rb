@@ -407,6 +407,73 @@ module Compute
       response = @connection.req("DELETE", "/servers/#{server_id}/os-volume_attachments/#{attachment_id}")
       true
     end
-  end
+
+
+#FLOATING IPs:
+  #list all float ips associated with tennant or account
+    def get_floating_ips
+      check_extension("os-floating-ips")
+      response = @connection.req("GET", "/os-floating-ips")
+      res = JSON.parse(response.body)["floating_ips"]
+      res.inject([]){|result, c| result<< OpenStack::Compute::FloatingIPAddress.new(c) ; result }
+    end
+    alias :floating_ips :get_floating_ips
+
+    #get details of a specific floating_ip by its id
+    def get_floating_ip(id)
+      check_extension("os-floating-ips")
+      response = @connection.req("GET", "/os-floating-ips/#{id}")
+      res = JSON.parse(response.body)["floating_ip"]
+      OpenStack::Compute::FloatingIPAddress.new(res)
+    end
+    alias :floating_ip :get_floating_ip
+
+
+    #can optionally pass the :pool parameter
+    def create_floating_ip(opts={})
+      check_extension("os-floating-ips")
+      data = opts[:pool] ? JSON.generate(opts) : JSON.generate({:pool=>nil})
+      response = @connection.req("POST", "/os-floating-ips",{:data=>data} )
+      res = JSON.parse(response.body)["floating_ip"]
+      OpenStack::Compute::FloatingIPAddress.new(res)
+    end
+    alias :allocate_floating_ip :create_floating_ip
+
+    #delete or deallocate a floating IP using its id
+    def delete_floating_ip(id)
+      check_extension("os-floating-ips")
+      response = @connection.req("DELETE", "/os-floating-ips/#{id}")
+      true
+    end
+
+    #add or attach a floating IP to a runnin g server
+    def attach_floating_ip(opts={:server_id=>"", :ip_id => ""})
+      check_extension("os-floating-ips")
+      #first get the address:
+      addr = get_floating_ip(opts[:ip_id]).ip
+      data = JSON.generate({:addFloatingIp=>{:address=>addr}})
+      response = @connection.req("POST", "/servers/#{opts[:server_id]}/action", {:data=>data})
+      true
+    end
+
+    def detach_floating_ip(opts={:server_id=>"", :ip_id => ""})
+      check_extension("os-floating-ips")
+      #first get the address:
+      addr = get_floating_ip(opts[:ip_id]).ip
+      data = JSON.generate({:removeFloatingIp=>{:address=>addr}})
+      response = @connection.req("POST", "/servers/#{opts[:server_id]}/action", {:data=>data})
+      true
+    end
+
+    private
+
+    def check_extension(name)
+      raise OpenStack::Exception::NotImplemented.new("#{name} not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[name.to_sym]
+      true
+    end
+
+
+end
+
 end
 end
