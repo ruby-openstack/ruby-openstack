@@ -75,9 +75,8 @@ module Compute
 
     # Creates a new server instance on OpenStack Compute
     #
-    # The argument is a hash of options.  The keys :name, :flavorRef,
-    # and :imageRef are required; :metadata, :security_groups,
-    # :key_name and :personality are optional.
+    # The argument is a hash of options.  The keys :name, :flavorRef are required,
+    # :metadata, :security_groups, :key_name and :personality are optional.
     #
     # :flavorRef and :imageRef are href strings identifying a particular
     # server flavor and image to use when building the server.  The :imageRef
@@ -112,7 +111,7 @@ module Compute
     #   >> server.adminPass
     #   => "NewServerSHMGpvI"
     def create_server(options)
-      raise OpenStack::Exception::MissingArgument, "Server name, flavorRef, and imageRef, must be supplied" unless (options[:name] && options[:flavorRef] && options[:imageRef])
+      raise OpenStack::Exception::MissingArgument, "Server name, and flavorRef must be supplied" unless (options[:name] && options[:flavorRef])
       options[:personality] = Personalities.get_personality(options[:personality])
       options[:security_groups] = (options[:security_groups] || []).inject([]){|res, c| res << {"name"=>c} ;res}
       data = JSON.generate(:server => options)
