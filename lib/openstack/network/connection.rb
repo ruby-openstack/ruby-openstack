@@ -31,8 +31,10 @@ module Network
     end
     alias :network :get_network
 
-    def create_network(name)
-      req_body = JSON.generate({"network"=>{"name"=>name}})
+    def create_network(name, parameter={})
+      body_hash = {"network" => {"name"=>name}}
+      body_hash['network'].merge! parameter
+      req_body = JSON.generate(body_hash)
       response = @connection.req("POST", "/networks", {:data=>req_body})
       OpenStack::Network::Network.new(JSON.parse(response.body)["network"])
     end
