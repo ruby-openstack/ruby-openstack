@@ -12,6 +12,7 @@ class Connection
     attr_accessor :service_path
     attr_accessor :service_port
     attr_accessor :service_scheme
+    attr_accessor :quantum_version
     attr_reader   :retries
     attr_reader   :auth_host
     attr_reader   :auth_port
@@ -106,6 +107,7 @@ class Connection
       @proxy_port = options[:proxy_port]
       @authok = false
       @http = {}
+      @quantum_version = 'v2.0' if @service_type == 'network'
     end
 
     #specialised from of csreq for PUT object... uses body_stream if possible
@@ -191,7 +193,7 @@ class Connection
       headers  = options[:headers]  || {'content-type' => 'application/json'}
       data     = options[:data]
       attempts = options[:attempts] || 0
-      path = @service_path + path
+      path = @service_path + @quantum_version.to_s + path
       res = csreq(method,server,path,port,scheme,headers,data,attempts)
       res.code.match(/^20.$/) ? (return res) : OpenStack::Exception.raise_exception(res)
     end
