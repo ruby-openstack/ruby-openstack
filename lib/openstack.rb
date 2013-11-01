@@ -48,6 +48,7 @@ module OpenStack
   require 'openstack/network/connection'
   require 'openstack/network/network'
   require 'openstack/network/subnet'
+  require 'openstack/network/router'
   require 'openstack/network/port'
   require 'openstack/version'
   # Constants that set limits on server creation

@@ -96,6 +96,61 @@ module Network
       true
     end
 
+    def list_routers
+      response = @connection.req('GET', '/routers')
+      nets_hash = JSON.parse(response.body)['routers']
+      nets_hash.inject([]){|res, current| res << OpenStack::Network::Router.new(current); res}
+    end
+    alias :routers :list_routers
+
+    def create_router(name, admin_state_up, opts={})
+      body_hash = {'router'=> {'name' => name, 'admin_state_up' => admin_state_up}}
+      body_hash['router'].merge! opts
+      req_body = JSON.generate body_hash
+      response = @connection.req('POST', '/routers', {:data => req_body })
+      OpenStack::Network::Router.new(JSON.parse(response.body)['router'])
+    end
+
+    def delete_router_by_name(name)
+      @connection.req('DELETE', "/routers/#{get_router_id(name)}")
+    end
+
+    def delete_router(id)
+      @connection.req('DELETE', "/routers/#{id}")
+    end
+
+    def add_router_interface_by_name(name, interface)
+      @connection.req('PUT', "/routers/#{get_router_id(name)}/#{interface}")
+    end
+
+    def add_router_interface(id, subnet_id)
+      req_body = JSON.generate({'subnet_id' => subnet_id})
+      @connection.req('PUT', "/routers/#{id}/add_router_interface", {:data => req_body})
+    end
+
+    def remove_router_interface(id, subnet_id)
+      req_body = JSON.generate({'subnet_id' => subnet_id})
+      @connection.req('PUT', "/routers/#{id}/remove_router_interface", {:data => req_body})
+    end
+
+    def update_router_by_name(name,opts={})
+      req_body = JSON.generate opts
+      response = @connection.req('PUT',"/routers/#{get_router_id(name)}",{:data => req_body})
+      OpenStack::Network::Router.new(JSON.parse(response.body)['router'])
+    end
+
+    def update_router(id,opts={})
+      req_body = JSON.generate({'router' => opts})
+      response = @connection.req('PUT',"/routers/#{id}",{:data => req_body})
+      OpenStack::Network::Router.new(JSON.parse(response.body)['router'])
+    end
+
+    def get_router_id(name)
+      routers.detect do |value|
+        return value.id if value.name == name
+      end
+    end
+
   end
 
 end

@@ -33,6 +33,7 @@ Gem::Specification.new do |s|
     "lib/openstack/network/network.rb",
     "lib/openstack/network/port.rb",
     "lib/openstack/network/subnet.rb",
+    "lib/openstack/network/router.rb",
     "lib/openstack/swift/connection.rb",
     "lib/openstack/swift/container.rb",
     "lib/openstack/swift/storage_object.rb",
