@@ -3,9 +3,12 @@
 # Instead, edit Jeweler::Tasks in Rakefile, and run 'rake gemspec'
 # -*- encoding: utf-8 -*-
 
+$:.unshift File.expand_path('lib', File.dirname(__FILE__))
+require 'openstack/version'
+
 Gem::Specification.new do |s|
   s.name = "openstack"
-  s.version = "1.1.1"
+  s.version = OpenStack::VERSION
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Dan Prince", "Marios Andreou"]

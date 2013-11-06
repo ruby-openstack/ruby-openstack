@@ -1,3 +1,3 @@
 module OpenStack
-  VERSION = '1.1.1-mira1'
+  VERSION = '1.1.2'
 end
