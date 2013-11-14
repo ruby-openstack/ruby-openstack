@@ -112,6 +112,10 @@ class Connection
 
     #specialised from of csreq for PUT object... uses body_stream if possible
     def put_object(server,path,port,scheme,headers = {},data = nil,attempts = 0) # :nodoc:
+
+      tries = @retries
+      time = 3
+
       if data.respond_to? :read
         headers['Transfer-Encoding'] = 'chunked'
         hdrhash = headerprep(headers)
@@ -136,11 +140,12 @@ class Connection
       response
     rescue Errno::EPIPE, Timeout::Error, Errno::EINVAL, EOFError
       # Server closed the connection, retry
-      raise OpenStack::Exception::Connection, "Unable to reconnect to #{server} after #{attempts} attempts" if attempts >= 5
-      attempts += 1
+      puts "Can't connect to the server: #{tries} tries to reconnect" if @is_debug
+      sleep time += 1
       @http[server].finish if @http[server].started?
-      start_http(server,path,port,scheme,headers)
-      retry
+      retry unless (tries -= 1) <= 0
+      raise OpenStack::Exception::Connection, "Unable to connect to #{server} after #{@retries} retries"
+
     rescue OpenStack::Exception::ExpiredAuthToken
       raise OpenStack::Exception::Connection, "Authentication token expired and you have requested not to retry" if @retry_auth == false
       OpenStack::Authentication.init(self)
@@ -150,6 +155,10 @@ class Connection
 
     # This method actually makes the HTTP REST calls out to the server
     def csreq(method,server,path,port,scheme,headers = {},data = nil,attempts = 0, &block) # :nodoc:
+
+      tries = @retries
+      time = 3
+
       hdrhash = headerprep(headers)
       start_http(server,path,port,scheme,hdrhash)
       request = Net::HTTP.const_get(method.to_s.capitalize).new(path,hdrhash)
@@ -173,11 +182,11 @@ class Connection
       response
     rescue Errno::EPIPE, Timeout::Error, Errno::EINVAL, EOFError
       # Server closed the connection, retry
-      raise OpenStack::Exception::Connection, "Unable to reconnect to #{server} after #{attempts} attempts" if attempts >= 5
-      attempts += 1
+      puts "Can't connect to the server: #{tries} tries to reconnect" if @is_debug
+      sleep time += 1
       @http[server].finish if @http[server].started?
-      start_http(server,path,port,scheme,headers)
-      retry
+      retry unless (tries -= 1) <= 0
+      raise OpenStack::Exception::Connection, "Unable to connect to #{server} after #{@retries} retries"
     rescue OpenStack::Exception::ExpiredAuthToken
       raise OpenStack::Exception::Connection, "Authentication token expired and you have requested not to retry" if @retry_auth == false
       OpenStack::Authentication.init(self)
