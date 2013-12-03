@@ -13,7 +13,7 @@ module Network
     attr_reader :device_owner
     attr_reader :tenant_id
 
-    def initialize(port_hash)
+    def initialize(port_hash={})
       @id = port_hash["id"]
       @network_id = port_hash["network_id"]
       @name = port_hash["name"]

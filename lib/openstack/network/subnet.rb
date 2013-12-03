@@ -14,7 +14,7 @@ module Network
     attr_reader :enable_dhcp
     attr_reader :tenant_id
 
-    def initialize(subnet_hash)
+    def initialize(subnet_hash={})
       @id = subnet_hash["id"]
       @network_id = subnet_hash["network_id"]
       @name = subnet_hash["name"]
