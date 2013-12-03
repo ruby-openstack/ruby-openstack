@@ -3,16 +3,13 @@
 # Instead, edit Jeweler::Tasks in Rakefile, and run 'rake gemspec'
 # -*- encoding: utf-8 -*-
 
-$:.unshift File.expand_path('lib', File.dirname(__FILE__))
-require 'openstack/version'
-
 Gem::Specification.new do |s|
   s.name = "openstack"
-  s.version = OpenStack::VERSION
+  s.version = "0.0.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Dan Prince", "Marios Andreou"]
-  s.date = "2013-07-09"
+  s.date = "2013-12-03"
   s.description = "API Binding for OpenStack"
   s.email = ["dprince@redhat.com", "marios@redhat.com"]
   s.extra_rdoc_files = [
@@ -21,7 +18,7 @@ Gem::Specification.new do |s|
   s.files = [
     "COPYING",
     "README.rdoc",
-    "lib/openstack/version.rb",
+    "VERSION",
     "lib/openstack.rb",
     "lib/openstack/compute/address.rb",
     "lib/openstack/compute/connection.rb",
@@ -31,15 +28,19 @@ Gem::Specification.new do |s|
     "lib/openstack/compute/personalities.rb",
     "lib/openstack/compute/server.rb",
     "lib/openstack/connection.rb",
+    "lib/openstack/identity/connection.rb",
+    "lib/openstack/identity/tenant.rb",
+    "lib/openstack/identity/user.rb",
     "lib/openstack/image/connection.rb",
     "lib/openstack/network/connection.rb",
     "lib/openstack/network/network.rb",
     "lib/openstack/network/port.rb",
-    "lib/openstack/network/subnet.rb",
     "lib/openstack/network/router.rb",
+    "lib/openstack/network/subnet.rb",
     "lib/openstack/swift/connection.rb",
     "lib/openstack/swift/container.rb",
     "lib/openstack/swift/storage_object.rb",
+    "lib/openstack/version.rb",
     "lib/openstack/volume/connection.rb",
     "lib/openstack/volume/snapshot.rb",
     "lib/openstack/volume/volume.rb",
@@ -52,26 +53,31 @@ Gem::Specification.new do |s|
   ]
   s.homepage = "https://github.com/ruby-openstack/ruby-openstack"
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.25"
+  s.rubygems_version = "1.8.24"
   s.summary = "OpenStack Ruby API"
 
   if s.respond_to? :specification_version then
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_development_dependency('mocha')
-      s.add_development_dependency('rake')
-      s.add_development_dependency('test-unit')
-      s.add_runtime_dependency('json')
+      s.add_runtime_dependency(%q<openstack>, [">= 0"])
+      s.add_development_dependency(%q<mocha>, [">= 0"])
+      s.add_development_dependency(%q<rake>, [">= 0"])
+      s.add_development_dependency(%q<test-unit>, [">= 0"])
+      s.add_runtime_dependency(%q<json>, [">= 0"])
     else
-      s.add_dependency('mocha')
-      s.add_dependency('test-unit')
-      s.add_dependency('json')
+      s.add_dependency(%q<openstack>, [">= 0"])
+      s.add_dependency(%q<mocha>, [">= 0"])
+      s.add_dependency(%q<rake>, [">= 0"])
+      s.add_dependency(%q<test-unit>, [">= 0"])
+      s.add_dependency(%q<json>, [">= 0"])
     end
   else
-    s.add_dependency('mocha')
-    s.add_dependency('test-unit')
-    s.add_dependency('json')
+    s.add_dependency(%q<openstack>, [">= 0"])
+    s.add_dependency(%q<mocha>, [">= 0"])
+    s.add_dependency(%q<rake>, [">= 0"])
+    s.add_dependency(%q<test-unit>, [">= 0"])
+    s.add_dependency(%q<json>, [">= 0"])
   end
 end
 
