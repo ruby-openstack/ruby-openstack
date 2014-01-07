@@ -1,3 +1,6 @@
+Tue Dec 03 2013 Marios Andreou (marios@redhat.com) - 1.1.2
+  - much networking contributions and fixes from Ivan Ponomarev zipfer, pull 30
+
 *Tue Jul 09 2013 Marios Andreou (marios@redhat.com) - 1.1.1
   - Adds floating-ips support ("os-floating-ips" extension for nova) - pull 28
   - Add 'status' attribute to volume object - pull 29

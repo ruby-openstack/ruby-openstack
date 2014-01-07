@@ -465,13 +465,43 @@ module Compute
       true
     end
 
+    def get_floating_ip_polls
+      check_extension 'os-floating-ip-pools'
+      response = @connection.req('GET', '/os-floating-ip-pools')
+      res = JSON.parse(response.body)['floating_ip_pools']
+    end
+
+    def get_floating_ips_bulk
+      check_extension 'os-floating-ips-bulk'
+      response = @connection.req('GET', '/os-floating-ips-bulk')
+      res = JSON.parse(response.body)['floating_ip_info']
+      res.inject([]){|result, c| result << OpenStack::Compute::FloatingIPInfo.new(c); result}
+    end
+
+    def create_floating_ips_bulk(opts = {})
+      raise ArgumentError, 'Should not be empty' if opts.empty?
+      data = JSON.generate({:floating_ips_bulk_create => opts})
+      check_extension 'os-floating-ips-bulk'
+      response = @connection.req('POST', '/os-floating-ips-bulk', {:data => data})
+      JSON.parse(response.body)['floating_ips_bulk_create']
+    end
+
+    # Not working
+    # Nova does not supported deletion via API
+    def delete_floating_ips_bulk(opts = {})
+      raise ArgumentError, 'Should not be empty' if opts.empty?
+      data = JSON.generate(opts)
+      check_extension 'os-floating-ips-bulk'
+      response = @connection.req('POST', '/os-floating-ips-bulk/delete', {:data => data})
+      res = JSON.generate(response)
+    end
+
     private
 
     def check_extension(name)
       raise OpenStack::Exception::NotImplemented.new("#{name} not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[name.to_sym]
       true
     end
-
 
 end
 

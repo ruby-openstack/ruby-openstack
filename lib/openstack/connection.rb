@@ -12,6 +12,8 @@ class Connection
     attr_accessor :service_path
     attr_accessor :service_port
     attr_accessor :service_scheme
+    attr_accessor :quantum_version
+    attr_reader   :retries
     attr_reader   :auth_host
     attr_reader   :auth_port
     attr_reader   :auth_scheme
@@ -78,6 +80,7 @@ class Connection
     private_class_method :new
 
     def initialize(options = {:retry_auth => true})
+      @retries = options[:retries] || 3
       @authuser = options[:username] || (raise Exception::MissingArgument, "Must supply a :username")
       @authkey = options[:api_key] || (raise Exception::MissingArgument, "Must supply an :api_key")
       @auth_url = options[:auth_url] || (raise Exception::MissingArgument, "Must supply an :auth_url")
@@ -104,10 +107,15 @@ class Connection
       @proxy_port = options[:proxy_port]
       @authok = false
       @http = {}
+      @quantum_version = 'v2.0' if @service_type == 'network'
     end
 
     #specialised from of csreq for PUT object... uses body_stream if possible
     def put_object(server,path,port,scheme,headers = {},data = nil,attempts = 0) # :nodoc:
+
+      tries = @retries
+      time = 3
+
       if data.respond_to? :read
         headers['Transfer-Encoding'] = 'chunked'
         hdrhash = headerprep(headers)
@@ -132,11 +140,12 @@ class Connection
       response
     rescue Errno::EPIPE, Timeout::Error, Errno::EINVAL, EOFError
       # Server closed the connection, retry
-      raise OpenStack::Exception::Connection, "Unable to reconnect to #{server} after #{attempts} attempts" if attempts >= 5
-      attempts += 1
+      puts "Can't connect to the server: #{tries} tries to reconnect" if @is_debug
+      sleep time += 1
       @http[server].finish if @http[server].started?
-      start_http(server,path,port,scheme,headers)
-      retry
+      retry unless (tries -= 1) <= 0
+      raise OpenStack::Exception::Connection, "Unable to connect to #{server} after #{@retries} retries"
+
     rescue OpenStack::Exception::ExpiredAuthToken
       raise OpenStack::Exception::Connection, "Authentication token expired and you have requested not to retry" if @retry_auth == false
       OpenStack::Authentication.init(self)
@@ -146,6 +155,10 @@ class Connection
 
     # This method actually makes the HTTP REST calls out to the server
     def csreq(method,server,path,port,scheme,headers = {},data = nil,attempts = 0, &block) # :nodoc:
+
+      tries = @retries
+      time = 3
+
       hdrhash = headerprep(headers)
       start_http(server,path,port,scheme,hdrhash)
       request = Net::HTTP.const_get(method.to_s.capitalize).new(path,hdrhash)
@@ -169,11 +182,11 @@ class Connection
       response
     rescue Errno::EPIPE, Timeout::Error, Errno::EINVAL, EOFError
       # Server closed the connection, retry
-      raise OpenStack::Exception::Connection, "Unable to reconnect to #{server} after #{attempts} attempts" if attempts >= 5
-      attempts += 1
+      puts "Can't connect to the server: #{tries} tries to reconnect" if @is_debug
+      sleep time += 1
       @http[server].finish if @http[server].started?
-      start_http(server,path,port,scheme,headers)
-      retry
+      retry unless (tries -= 1) <= 0
+      raise OpenStack::Exception::Connection, "Unable to connect to #{server} after #{@retries} retries"
     rescue OpenStack::Exception::ExpiredAuthToken
       raise OpenStack::Exception::Connection, "Authentication token expired and you have requested not to retry" if @retry_auth == false
       OpenStack::Authentication.init(self)
@@ -189,13 +202,10 @@ class Connection
       headers  = options[:headers]  || {'content-type' => 'application/json'}
       data     = options[:data]
       attempts = options[:attempts] || 0
-      path = @service_path + path
+      path = @service_path + @quantum_version.to_s + path
       res = csreq(method,server,path,port,scheme,headers,data,attempts)
-      if not res.code.match(/^20.$/)
-        OpenStack::Exception.raise_exception(res)
-      end
-      return res
-    end;
+      res.code.match(/^20.$/) ? (return res) : OpenStack::Exception.raise_exception(res)
+    end
 
     private
 
@@ -205,13 +215,17 @@ class Connection
       default_headers["X-Auth-Token"] = @authtoken if authok
       default_headers["X-Storage-Token"] = @authtoken if authok
       default_headers["Connection"] = "Keep-Alive"
-      default_headers["User-Agent"] = "OpenStack Ruby API #{VERSION}"
+      default_headers["User-Agent"] = "OpenStack Ruby API #{OpenStack::VERSION}"
       default_headers["Accept"] = "application/json"
       default_headers.merge(headers)
     end
 
     # Starts (or restarts) the HTTP connection
     def start_http(server,path,port,scheme,headers) # :nodoc:
+
+      tries = @retries
+      time = 3
+
       if (@http[server].nil?)
         begin
           @http[server] = Net::HTTP::Proxy(@proxy_host, @proxy_port).new(server,port)
@@ -221,6 +235,9 @@ class Connection
           end
           @http[server].start
         rescue
+          puts "Can't connect to the server: #{tries} tries to reconnect" if @is_debug
+          sleep time += 1
+          retry unless (tries -= 1) <= 0
           raise OpenStack::Exception::Connection, "Unable to connect to #{server}"
         end
       end
@@ -254,6 +271,10 @@ class AuthV20
   attr_reader :uri
   attr_reader :version
   def initialize(connection)
+
+    tries = connection.retries
+    time = 3
+
     begin
       server = Net::HTTP::Proxy(connection.proxy_host, connection.proxy_port).new(connection.auth_host, connection.auth_port)
       if connection.auth_scheme == "https"
@@ -262,7 +283,10 @@ class AuthV20
       end
       server.start
     rescue
-      raise OpenStack::Exception::Connection, "Unable to connect to #{server}"
+      puts "Can't connect to the server: #{tries} tries  to reconnect" if connection.is_debug
+      sleep time += 1
+      retry unless (tries -= 1) <= 0
+      raise OpenStack::Exception::Connection, "Unable to connect to  #{server}"
     end
 
     @uri = String.new
@@ -347,6 +371,10 @@ end
 class AuthV10
 
   def initialize(connection)
+
+    tries = connection.retries
+    time = 3
+
     hdrhash = { "X-Auth-User" => connection.authuser, "X-Auth-Key" => connection.authkey }
     begin
       server = Net::HTTP::Proxy(connection.proxy_host, connection.proxy_port).new(connection.auth_host, connection.auth_port)
@@ -356,9 +384,14 @@ class AuthV10
       end
       server.start
     rescue
+      puts "Can't connect to the server: #{tries} tries  to reconnect" if connection.is_debug
+      sleep time += 1
+      retry unless (tries -= 1) <= 0
       raise OpenStack::Exception::Connection, "Unable to connect to #{server}"
     end
+
     response = server.get(connection.auth_path, hdrhash)
+
     if (response.code =~ /^20./)
       connection.authtoken = response["x-auth-token"]
       case connection.service_type
