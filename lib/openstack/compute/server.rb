@@ -95,6 +95,39 @@ module Compute
       self.reboot("HARD")
     end
     
+    # Sends an API request to pause (in RAM) the server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.pause()
+    #   => true
+    def pause()
+      data = JSON.generate(:pause => nil)
+      puts data
+      pp "About to post ACTION"
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+     
+    # Sends an API request to unpause (from RAM) the server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.unpause()
+    #   => true
+    def unpause()
+      data = JSON.generate(:unpause => nil)
+      puts data
+      pp "About to post ACTION"
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+     
+
+
+
     
      # Sends an API request to stop (suspend) the server.
      #
