@@ -78,7 +78,22 @@ module Compute
       @pool = addr_hash["pool"]
     end
 
+  end
 
+  class FloatingIPInfo
+    attr_reader :address
+    attr_reader :instance_uuid
+    attr_reader :interface
+    attr_reader :pool
+    attr_reader :project_id
+
+    def initialize(info_hash)
+      @address = info_hash['address']
+      @instance_uuid = info_hash['instance_uuid']
+      @interface = info_hash['interface']
+      @pool = info_hash['pool']
+      @project_id = info_hash['project_id']
+    end
   end
 
 end
