@@ -251,6 +251,15 @@ module Compute
       address_list
     end
 
+    #Get novnc console URL
+    #Return Hash with type and URL
+    def get_console
+      data = JSON.generate("os-getVNCConsole" => {:type => "novnc"})
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      JSON::parse(response.body)["console"]
+    end
+
   end
 end
 end
