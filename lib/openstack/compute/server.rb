@@ -260,6 +260,15 @@ module Compute
       JSON::parse(response.body)["console"]
     end
 
+    #Get console output
+    #Return output string object
+    def get_console_output(length=50)
+      data = JSON.generate("os-getConsoleOutput" => {:length => length})
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      JSON::parse(response.body)["output"]
+    end
+
   end
 end
 end
