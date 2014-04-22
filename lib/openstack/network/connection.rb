@@ -151,6 +151,18 @@ module Network
       end
     end
 
+    def update_quotas(options)
+      req_body = JSON.generate({'quota' => {'floatingip' => options[:floating_ips]}})
+      response = @connection.req("PUT", "/quotas/#{options[:tenant_id]}", {:data => req_body})
+      JSON.parse(response.body)
+    end
+
+    def floating_ips(tenant_id = nil)
+      response = @connection.req('GET', "/floatingips?tenant_id=#{tenant_id}")
+      ips_info = JSON.parse(response.body)['floatingips']
+    end
+
+
   end
 
 end
