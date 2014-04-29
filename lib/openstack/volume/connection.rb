@@ -88,6 +88,24 @@ module Volume
       true
     end
 
+
+    def get_quotas(tenant_id)
+      response = @connection.req('GET', "/os-quota-sets/#{tenant_id}")
+      res = JSON.parse(response.body)['quota_set']
+    end
+
+    def update_quotas(options)
+      req_body = JSON.generate({
+        'quota_set' => {
+          'gigabytes' => options[:gigabytes],
+          #'snapshots' => options[:snapshots],
+          #'volumes' => options[:volumes],
+        }
+      })
+      response = @connection.req("PUT", "/os-quota-sets/#{options[:tenant_id]}", {:data => req_body})
+      JSON.parse(response.body)
+    end
+
     private
 
     #fudge... not clear if volumes support is available as 'native' volume API or
