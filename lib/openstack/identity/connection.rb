@@ -1,6 +1,8 @@
 module OpenStack
   module Identity
     class Connection
+      attr_accessor :connection
+
       def initialize(connection)
         @connection = connection
         OpenStack::Authentication.init(@connection)
@@ -11,9 +13,10 @@ module OpenStack
         tenants_hash = JSON.parse(response.body)["tenants"]
         tenants_hash.inject([]){|res, current| res << OpenStack::Identity::Tenant.new(current); res}
       end
+      alias :tenants :list_tenants
 
       def create_tenant(options)
-        req_body = JSON.generate({"tenant"=>{"name" => options[:name]}})
+        req_body = JSON.generate({"tenant"=>{"name" => options[:name], "description" => options[:description], "enabled" => options[:enabled]}})
         response = @connection.req("POST", "/tenants", {:data => req_body, :port => "35357"})
         OpenStack::Identity::Tenant.new(JSON.parse(response.body)["tenant"])
       end
@@ -30,7 +33,7 @@ module OpenStack
       end
 
       def create_user(options)
-        req_body = JSON.generate({"user" => {"name" => options[:name], "password" => options[:password]}})
+        req_body = JSON.generate({"user" => {"name" => options[:name], "password" => options[:password], "email" => options[:email]}})
         response = @connection.req("POST", "/users", {:data => req_body, :port => "35357"})
         OpenStack::Identity::User.new(JSON.parse(response.body)["user"])
       end
