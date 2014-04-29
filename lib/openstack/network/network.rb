@@ -9,6 +9,7 @@ module Network
   attr_reader :subnets
   attr_reader :shared
   attr_reader :tenant_id
+  attr_reader :external
 
   def initialize(net_info={})
     @id = net_info["id"]
@@ -18,6 +19,7 @@ module Network
     @subnets = net_info["subnets"]
     @shared = net_info["shared"]
     @tenant_id = net_info["tenant_id"]
+    @external = net_info["router:external"]
   end
 
   end
