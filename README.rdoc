@@ -18,7 +18,7 @@ Other parameters for the create method:
 * :auth_method - the type of authentication to be used with the above auth_url - either 'password' (username/password, 'key' (ec2 style key/private key)  or 'rax-kskey'.
 * :authtenant_name OR :authtenant_id - one of these MUST be specified when talking to a v2 authentication endpoint (keystone) - depending on whether you use tenant name (or tenant ID). Passing only :authtenant will result in that parameter being used as tenant name.
 * :username - the username or public key (depending on auth_method)
-* :api_key - the password or private key (denending on auth_method).
+* :api_key - the password or private key (depending on auth_method).
 
 === Try it out:
 
@@ -410,8 +410,7 @@ See the class definitions for documentation on specific methods and operations.
 
   #List networks:
   >> quantum.networks
-  => [#<OpenStack::Network::Network:0xa7c8f94 @id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="net_1363343212", @admin_state_up=true, @status="ACTIVE",
-@subnets=["34ea9f1e-d71a-48bd-89b0-af2f5c051912","7780f890-8334-43a1-934c-f1ce5edc4561"], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">, #<OpenStack::Network::Network:0xa7c8ef4 @id="1cfad632-3473-4c5b-b2d3-405cc3093286", @name="net_1363344435", @admin_state_up=true, @status="ACTIVE", @subnets=["c4293c24-07d0-47dc-bead-ec8d3934b8db"], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">]
+  => [#<OpenStack::Network::Network:0xa7c8f94 @id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="net_1363343212", @admin_state_up=true, @status="ACTIVE", @subnets=["34ea9f1e-d71a-48bd-89b0-af2f5c051912","7780f890-8334-43a1-934c-f1ce5edc4561"], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">, #<OpenStack::Network::Network:0xa7c8ef4 @id="1cfad632-3473-4c5b-b2d3-405cc3093286", @name="net_1363344435", @admin_state_up=true, @status="ACTIVE", @subnets=["c4293c24-07d0-47dc-bead-ec8d3934b8db"], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">]
 
   >> net1 = quantum.network("b4abfaff-9e24-4192-9219-a4a60819aba2")
   => #<OpenStack::Network::Network:0xa7f28e4 @id="b4abfaff-9e24-4192-9219-a4a60819aba2", @name="net_1363343212", @admin_state_up=true, @status="ACTIVE", @subnets=["34ea9f1e-d71a-48bd-89b0-af2f5c051912", "7780f890-8334-43a1-934c-f1ce5edc4561"], @shared=false, @tenant_id="7be215d541ea4db4a23b3a84b0882408">
