@@ -467,6 +467,8 @@ class Exception
   end
   class QuantumError                < ComputeError # :nodoc:
   end
+  class NeutronError                < ComputeError # :nodoc:
+  end
 
   # Plus some others that we define here
 
