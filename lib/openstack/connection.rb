@@ -133,7 +133,7 @@ class Connection
       if @is_debug
           puts "REQUEST: #{method} => #{path}"
           puts data if data
-          puts "RESPONSE: #{response.body}"
+          puts "RESPONSE (#{response.code}): #{response.body}"
           puts '----------------------------------------'
       end
       raise OpenStack::Exception::ExpiredAuthToken if response.code == "401"
@@ -175,7 +175,7 @@ class Connection
       if @is_debug
           puts "REQUEST: #{method} => #{path}"
           puts data if data
-          puts "RESPONSE: #{response.body}"
+          puts "RESPONSE (#{response.code}): #{response.body}"
           puts '----------------------------------------'
       end
       raise OpenStack::Exception::ExpiredAuthToken if response.code == "401"
@@ -465,6 +465,8 @@ class Exception
   end
   class ResourceStateConflict       < ComputeError # :nodoc:
   end
+  class NeutronError                < ComputeError # :nodoc:
+  end
   class QuantumError                < ComputeError # :nodoc:
   end
 
@@ -503,6 +505,7 @@ class Exception
           fault=key
           info=val
         end
+
         exception_class = self.const_get(fault[0,1].capitalize+fault[1,fault.length])
         raise exception_class.new((info["message"] || info), response.code, response.body)
       end
