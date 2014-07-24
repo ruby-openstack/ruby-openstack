@@ -133,7 +133,7 @@ class Connection
       if @is_debug
           puts "REQUEST: #{method} => #{path}"
           puts data if data
-          puts "RESPONSE: #{response.body}"
+          puts "RESPONSE (#{response.code}): #{response.body}"
           puts '----------------------------------------'
       end
       raise OpenStack::Exception::ExpiredAuthToken if response.code == "401"
@@ -505,6 +505,8 @@ class Exception
           fault=key
           info=val
         end
+        puts key
+        puts val
         exception_class = self.const_get(fault[0,1].capitalize+fault[1,fault.length])
         raise exception_class.new((info["message"] || info), response.code, response.body)
       end
