@@ -95,6 +95,43 @@ module Compute
       self.reboot("HARD")
     end
 
+	# Set a method to silent warnings.
+    def silently(&block)
+      warn_level = $VERBOSE
+      $VERBOSE = nil
+      begin
+        result = block.call
+      ensure
+        $VERBOSE = warn_level
+      end
+      result
+    end
+
+    # Send an API request to start the server.
+    #
+    # Returns true if the API call succeeds.
+    def start!
+      silently do
+        data = JSON.generate(:'os-start' => {:type => type})
+        response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+        OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+        true
+      end
+    end
+
+    # Send an API request to stop the server.
+    #
+    # Returns true if the API call succeeds.
+    def stop!
+      silently do
+        data = JSON.generate(:'os-stop' => {:type => type})
+        response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+        OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+        true
+      end
+    end
+
+	
     # Updates various parameters about the server.  Currently, the only operations supported are changing the server name (not the actual hostname
     # on the server, but simply the label in the Servers API) and the administrator password (note: changing the admin password will trigger
     # a reboot of the server).  Other options are ignored.  One or both key/value pairs may be provided.  Keys are case-sensitive.
