@@ -364,6 +364,14 @@ module Compute
       {res[:security_group][:id].to_s => res[:security_group]}
     end
 
+    def update_security_group(id, name, description)
+      raise OpenStack::Exception::NotImplemented.new("os-security-groups not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
+      data = JSON.generate(:security_group => { "name" => name, "description" => description})
+      response = @connection.req("PUT", "/os-security-groups/#{id}", {:data => data})
+      res = OpenStack.symbolize_keys(JSON.parse(response.body))
+      {res[:security_group][:id].to_s => res[:security_group]}
+    end
+
     def delete_security_group(id)
       raise OpenStack::Exception::NotImplemented.new("os-security-groups not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
       response = @connection.req("DELETE", "/os-security-groups/#{id}")
