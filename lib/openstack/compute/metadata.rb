@@ -63,6 +63,15 @@ module Compute
       end
     end
 
+    def create_or_update(hash)
+      return if hash.empty?
+      hash.each_key { |key|
+        json = JSON.generate(:meta => { key => hash[key] })
+        @compute.connection.req('PUT', "#{@base_url}/#{key}", :data => json)
+      }
+      refresh
+    end
+
     def refresh(keys=nil)
       if keys.nil?
         response = @compute.connection.req('GET', @base_url)
