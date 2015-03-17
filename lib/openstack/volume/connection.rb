@@ -57,7 +57,7 @@ module Volume
 
     def update_volume(options)
       raise OpenStack::Exception::MissingArgument, "volume_id must be specified to update a volume" unless options[:volume_id]
-      data = JSON.generate({volume: options})
+      data = JSON.generate({:volume => options})
       volume_id = options.delete( :volume_id )
       response = @connection.csreq("PUT",@connection.service_host,"/v2/#{@connection.authtenant[:value]}/volumes/#{volume_id}",@connection.service_port,@connection.service_scheme,{'content-type' => 'application/json'},data)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
@@ -67,7 +67,7 @@ module Volume
 
 
     def extend_volume(volume_id:, size:)
-      data = JSON.generate({"os-extend"=> {"new_size"=> size}})
+      data = JSON.generate({:"os-extend" => {"new_size"=> size}})
       response = @connection.csreq("POST",@connection.service_host,"/v2/#{@connection.authtenant[:value]}/volumes/#{volume_id}/action",@connection.service_port,@connection.service_scheme,{'content-type' => 'application/json'},data)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       get_volume(volume_id)
