@@ -95,7 +95,7 @@ module Compute
       self.reboot("HARD")
     end
 
-    # Sends an API request to suspend this server. 
+    # Sends an API request to suspend this server.
     #
     # Returns true if the API call succeeds.
     #
@@ -116,6 +116,32 @@ module Compute
     #   => true
     def resume
       data = JSON.generate(:resume => nil)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
+    # Sends an API request to shutdown this server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.shutdown
+    #   => true
+    def shutdown
+      data = JSON.generate("os-stop" => nil)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
+    # Sends an API request to start this server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.start
+    #   => true
+    def start
+      data = JSON.generate("os-start" => nil)
       response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       true
