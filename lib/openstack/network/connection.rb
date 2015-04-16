@@ -19,38 +19,38 @@ module Network
     end
 
     def list_networks
-      response = @connection.req("GET", "/networks")
+      response = @connection.req("GET", "/v2.0/networks")
       nets_hash = JSON.parse(response.body)["networks"]
       nets_hash.inject([]){|res, current| res << OpenStack::Network::Network.new(current); res}
     end
     alias :networks :list_networks
 
     def get_network(network_id)
-      response = @connection.req("GET", "/networks/#{network_id}")
+      response = @connection.req("GET", "/v2.0/networks/#{network_id}")
       OpenStack::Network::Network.new(JSON.parse(response.body)["network"])
     end
     alias :network :get_network
 
     def create_network(name)
       req_body = JSON.generate({"network"=>{"name"=>name}})
-      response = @connection.req("POST", "/networks", {:data=>req_body})
+      response = @connection.req("POST", "/v2.0/networks", {:data=>req_body})
       OpenStack::Network::Network.new(JSON.parse(response.body)["network"])
     end
 
     def delete_network(id)
-      @connection.req("DELETE", "/networks/#{id}")
+      @connection.req("DELETE", "/v2.0/networks/#{id}")
       true
     end
 
     def list_subnets
-      response = @connection.req("GET", "/subnets")
+      response = @connection.req("GET", "/v2.0/subnets")
       nets_hash = JSON.parse(response.body)["subnets"]
       nets_hash.inject([]){|res, current| res << OpenStack::Network::Subnet.new(current); res}
     end
     alias :subnets :list_subnets
 
     def get_subnet(subnet_id)
-      response = @connection.req("GET", "/subnets/#{subnet_id}")
+      response = @connection.req("GET", "/v2.0/subnets/#{subnet_id}")
       OpenStack::Network::Subnet.new(JSON.parse(response.body)["subnet"])
     end
     alias :subnet :get_subnet
@@ -59,24 +59,24 @@ module Network
       body_hash = {"subnet"=>{"network_id"=> network_id, "cidr"=>cidr, "ip_version"=>ip_version}}
       body_hash["subnet"].merge!(opts) #fixme - validation?
       req_body = JSON.generate(body_hash)
-      response = @connection.req("POST", "/subnets", {:data=>req_body})
+      response = @connection.req("POST", "/v2.0/subnets", {:data=>req_body})
       OpenStack::Network::Subnet.new(JSON.parse(response.body)["subnet"])
     end
 
     def delete_subnet(id)
-      @connection.req("DELETE", "/subnets/#{id}")
+      @connection.req("DELETE", "/v2.0/subnets/#{id}")
       true
     end
 
     def list_ports
-      response = @connection.req("GET", "/ports")
+      response = @connection.req("GET", "/v2.0/ports")
       ports_hash = JSON.parse(response.body)["ports"]
       ports_hash.inject([]){|res, current| res << OpenStack::Network::Port.new(current); res}
     end
     alias :ports :list_ports
 
     def get_port(port_id)
-      response = @connection.req("GET", "/ports/#{port_id}")
+      response = @connection.req("GET", "/v2.0/ports/#{port_id}")
       OpenStack::Network::Port.new(JSON.parse(response.body)["port"])
     end
     alias :port :get_port
@@ -85,12 +85,12 @@ module Network
       body_hash = {"port"=>{"network_id"=> network_id}}
       body_hash["port"].merge!(opts) #fixme - validation?
       req_body = JSON.generate(body_hash)
-      response = @connection.req("POST", "/ports", {:data=>req_body})
+      response = @connection.req("POST", "/v2.0/ports", {:data=>req_body})
       OpenStack::Network::Port.new(JSON.parse(response.body)["port"])
     end
 
     def delete_port(id)
-      @connection.req("DELETE", "/ports/#{id}")
+      @connection.req("DELETE", "/v2.0/ports/#{id}")
       true
     end
 
