@@ -70,8 +70,8 @@ module Network
       true
     end
 
-    def list_ports
-      response = @connection.req("GET", "/ports")
+    def list_ports(options = {})
+      response = @connection.req("GET", "/ports#{OpenStack.get_query_params(options, options.keys)}")
       ports_hash = JSON.parse(response.body)["ports"]
       ports_hash.inject([]){|res, current| res << OpenStack::Network::Port.new(current); res}
     end
