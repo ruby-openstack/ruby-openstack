@@ -69,12 +69,10 @@ module Compute
       JSON.parse(response.body)
     end
 
-    # => nil
-    # или массив серверов с занятыми ресурсами.
     # [{:instance_id=>"6da3bd02-3745-4d9c-afcd-4686d5d2530f", ... , :memory_mb=>2048, :vcpus=>2, :local_gb=>40, :name=>"limit-server"}, {}]
     def servers_usage(tenant_id)
       response = @connection.req('GET', "/os-simple-tenant-usage/#{tenant_id}?start=2014-01-01T01:01:01.000000&end=2020-01-01T01:01:01.000000")
-      OpenStack.symbolize_keys(JSON.parse(response.body)['tenant_usage']['server_usages'])
+      OpenStack.symbolize_keys(JSON.parse(response.body)['tenant_usage']['server_usages']) || []
     end
 
     # Returns an array of hashes with more details about each server that exists under this account.  Additional information
