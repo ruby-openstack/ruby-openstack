@@ -570,7 +570,7 @@ module Compute
     alias :volume :get_volume
 
     def delete_volume(id)
-      response = @connection.req("DELETE", "/os-volumes/#{id}")
+      @connection.req("DELETE", "/os-volumes/#{id}")
       true
     end
 
