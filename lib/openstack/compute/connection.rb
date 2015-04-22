@@ -42,13 +42,40 @@ module Compute
     #   => [{:name=>"demo-standingcloud-lts", :id=>168867},
     #       {:name=>"demo-aicache1", :id=>187853}]
     def list_servers(options = {})
-      anti_cache_param="cacheid=#{Time.now.to_i}"
-      path = OpenStack.paginate(options).empty? ? "#{@connection.service_path}/servers?#{anti_cache_param}" : "#{@connection.service_path}/servers?#{OpenStack.paginate(options)}&#{anti_cache_param}"
-      response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
-      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      path = "/servers/detail?"
+      path << "all_tenants=1&tenant_id=#{options[:tenant_id]}&" if options[:tenant_id]
+      path << "#{OpenStack.paginate(options)}&" if OpenStack.paginate(options).present?
+      path << "cacheid=#{Time.now.to_i}"
+
+      response = @connection.req("GET", path)
       OpenStack.symbolize_keys(JSON.parse(response.body)["servers"])
     end
     alias :servers :list_servers
+
+
+    def get_quotas(tenant_id)
+      response = @connection.req('GET', "/os-quota-sets/#{tenant_id}")
+      res = JSON.parse(response.body)['quota_set']
+    end
+
+    def update_quotas(options)
+      req_body = JSON.generate({
+        'quota_set' => {
+          'cores' => options[:cores],
+          'ram' => options[:ram],
+        }
+      })
+      response = @connection.req("PUT", "/os-quota-sets/#{options[:tenant_id]}", {:data => req_body})
+      JSON.parse(response.body)
+    end
+
+    # => nil
+    # или массив серверов с занятыми ресурсами.
+    # [{:instance_id=>"6da3bd02-3745-4d9c-afcd-4686d5d2530f", ... , :memory_mb=>2048, :vcpus=>2, :local_gb=>40, :name=>"limit-server"}, {}]
+    def servers_usage(tenant_id)
+      response = @connection.req('GET', "/os-simple-tenant-usage/#{tenant_id}?start=2014-01-01T01:01:01.000000&end=2020-01-01T01:01:01.000000")
+      OpenStack.symbolize_keys(JSON.parse(response.body)['tenant_usage']['server_usages'])
+    end
 
     # Returns an array of hashes with more details about each server that exists under this account.  Additional information
     # includes public and private IP addresses, status, hostID, and more.  All hash keys are symbols except for the metadata
@@ -179,9 +206,40 @@ module Compute
     #   >> flavor = cs.flavor(1)
     #   => #<OpenStack::Compute::Flavor:0x10156dcc0 @name="256 server", @disk=10, @id=1, @ram=256>
     def get_flavor(id)
-      OpenStack::Compute::Flavor.new(self,id)
+      response = @connection.req("GET", "/flavors/#{id}")
+      flavor_info = JSON.parse(response.body)['flavor']
+      OpenStack::Compute::Flavor.new(flavor_info)
     end
     alias :flavor :get_flavor
+
+    # nova.create_flavor({:name => 'small', :vcpus => 2, :ram => 1024, :disk => 1}, true)
+    # :name - must be unique, :ram - MB, :disk - GB
+    # => #<OpenStack::Compute::Flavor:0x007ff95333e268 @id="0c0c393b-3acd-4569-baae-7a7afbe398f6", @name="small", @ram=1024, @disk=1, @vcpus=2>
+    def create_flavor(options, public = false)
+      raise OpenStack::Exception::MissingArgument, "Flavor name, vcpus, ram and disk, must be supplied" unless (options[:name] && options[:vcpus] && options[:ram] && options[:disk])
+      data = JSON.generate(:flavor => options.merge!({'os-flavor-access:is_public' => public}))
+      response = @connection.req("POST", "/flavors", {:data => data})
+      flavor_info = JSON.parse(response.body)['flavor']
+      OpenStack::Compute::Flavor.new(flavor_info)
+    end
+
+    def delete_flavor(id)
+      response = @connection.req("DELETE", "/flavors/#{id}")
+      true
+    end
+
+    def add_tenant_to_flavor(flavor_id, tenant_id)
+      data = JSON.generate({'addTenantAccess' => {'tenant' => tenant_id}})
+      response = @connection.req("POST", "/flavors/#{flavor_id}/action", {:data => data})
+      JSON.parse(response.body)
+    end
+
+    def delete_tenant_from_flavor(flavor_id, tenant_id)
+      data = JSON.generate({'removeTenantAccess' => {'tenant' => tenant_id}})
+      response = @connection.req("POST", "/flavors/#{flavor_id}/action", {:data => data})
+      JSON.parse(response.body)
+    end
+
 
     # Returns the current state of the programatic API limits.  Each account has certain limits on the number of resources
     # allowed in the account, and a rate of API operations.
@@ -206,11 +264,11 @@ module Compute
     # time that the limit resets.
     #
     # Use this information as you're building your applications to put in relevant pauses if you approach your API limitations.
-    def limits
-      response = @connection.csreq("GET",@connection.service_host,"#{@connection.service_path}/limits",@connection.service_port,@connection.service_scheme)
-      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
-      OpenStack.symbolize_keys(JSON.parse(response.body)['limits'])
+    def limits(tenant_id)
+      response = @connection.req('GET', "/limits?tenant_id=#{tenant_id}")
+      JSON.parse(response.body)['limits']['absolute']
     end
+
 
 # ==============================
 #  API EXTENSIONS
@@ -494,6 +552,26 @@ module Compute
       check_extension 'os-floating-ips-bulk'
       response = @connection.req('POST', '/os-floating-ips-bulk/delete', {:data => data})
       res = JSON.generate(response)
+    end
+
+    # nova.create_volume({:display_name => 'my_volume', :size => 123, :availability_zone => 'nova2'})
+    # :display_name - must be unique, :size - GB
+    def create_volume(options)
+      raise OpenStack::Exception::MissingArgument, "Volume display_name, size, must be supplied" unless (options[:display_name] && options[:size])
+      data = JSON.generate(:volume => options)
+      response = @connection.req("POST", "/os-volumes", {:data => data})
+      OpenStack.symbolize_keys(JSON.parse(response.body)['volume'])
+    end
+
+    def get_volume(id)
+      response = @connection.req("GET", "/os-volumes/#{id}")
+      OpenStack.symbolize_keys(JSON.parse(response.body)['volume'])
+    end
+    alias :volume :get_volume
+
+    def delete_volume(id)
+      response = @connection.req("DELETE", "/os-volumes/#{id}")
+      true
     end
 
     private
