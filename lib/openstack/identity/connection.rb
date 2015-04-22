@@ -21,6 +21,11 @@ module OpenStack
         OpenStack::Identity::Tenant.new(JSON.parse(response.body)["tenant"])
       end
 
+      def find_tenant_by_name(name)
+        response = @connection.req('GET', "/tenants?name=#{name}", {:port => "35357"})
+        OpenStack::Identity::Tenant.new(JSON.parse(response.body)['tenant'])
+      end
+
       def delete_tenant(id)
         @connection.req("DELETE", "/tenants/#{id}", {:port => "35357"})
         true
