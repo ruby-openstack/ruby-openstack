@@ -326,11 +326,11 @@ class AuthV20
           if connection.region
             endpoints.each do |ep|
               if ep["region"] and ep["region"].upcase == connection.region.upcase
-                @uri = URI.parse(ep["publicURL"])
+                @uri = URI.parse(ep["adminURL"])
               end
             end
           else
-            @uri = URI.parse(endpoints[0]["publicURL"])
+            @uri = URI.parse(endpoints[0]["adminURL"])
           end
           if @uri == ""
             raise OpenStack::Exception::Authentication, "No API endpoint for region #{connection.region}"
@@ -359,7 +359,7 @@ class AuthV20
   end
 
   def get_version_from_response(service)
-    service["endpoints"].first["versionId"] || parse_version_from_endpoint(service["endpoints"].first["publicURL"])
+    service["endpoints"].first["versionId"] || parse_version_from_endpoint(service["endpoints"].first["adminURL"])
   end
 
   #IN  --> https://az-2.region-a.geo-1.compute.hpcloudsvc.com/v1.1/46871569847393
