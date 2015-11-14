@@ -257,7 +257,7 @@ class Authentication
   # If it fails, it raises an exception.
 
   def self.init(conn)
-    if conn.auth_path =~ /.*v2.0\/?$/
+    if conn.auth_path =~ /.*v2.0\/?/
       AuthV20.new(conn)
     else
       AuthV10.new(conn)
