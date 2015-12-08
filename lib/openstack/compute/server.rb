@@ -95,6 +95,34 @@ module Compute
       self.reboot("HARD")
     end
 
+    # Sends an API request to stop (suspend) the server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.stop()
+    #   => true
+    def stop()
+      data = JSON.generate(:suspend => nil)
+      puts data
+      pp "About to post ACTION"
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+    
+    # Sends an API request to start (resume) the server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.start()
+    #   => true
+    def start()
+      data = JSON.generate(:resume => nil)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
     # Updates various parameters about the server.  Currently, the only operations supported are changing the server name (not the actual hostname
     # on the server, but simply the label in the Servers API) and the administrator password (note: changing the admin password will trigger
     # a reboot of the server).  Other options are ignored.  One or both key/value pairs may be provided.  Keys are case-sensitive.
@@ -249,6 +277,76 @@ module Compute
         end
       end
       address_list
+    end
+
+    #Get novnc console URL
+    #Return Hash with type and URL
+    def get_console
+      data = JSON.generate("os-getVNCConsole" => {:type => "novnc"})
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      JSON::parse(response.body)["console"]
+    end
+
+    #Get console output
+    #Return output string object
+    def get_console_output(length=50)
+      data = JSON.generate("os-getConsoleOutput" => {:length => length})
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      JSON::parse(response.body)["output"]
+    end
+
+    # Sends an API request to pause this server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.pause
+    #   => true
+    def pause
+      data = JSON.generate(:pause => nil)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
+    # Sends an API request to unpause this server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.unpause
+    #   => true
+    def unpause
+      data = JSON.generate(:unpause => nil)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
+    # Sends an API request to suspend this server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.suspend
+    #   => true
+    def suspend
+      data = JSON.generate(:suspend => nil)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
+    # Sends an API request to resume this server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.resume
+    #   => true
+    def resume
+      data = JSON.generate(:resume => nil)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
     end
 
   end
