@@ -18,7 +18,7 @@ module Swift
 
     # Retrieves Metadata for the container
     def container_metadata
-      path = "/#{URI.encode(@name.to_s)}"
+      path = "/#{ERB::Util.url_encode(@name.to_s)}"
       response = @swift.connection.req("HEAD", path)
       resphash = response.to_hash
       meta = {:bytes=>resphash["x-container-bytes-used"][0], :count=>resphash["x-container-object-count"][0], :metadata=>{}}
@@ -54,7 +54,7 @@ module Swift
       headers = metadatahash.inject({}){|res, (k,v)| ((k.to_s.match /^X-Container-Meta-/i) ? res[k.to_s]=v : res["X-Container-Meta-#{k}"]=v ) ; res}
       headers.merge!({'content-type'=>'application/json'})
       begin
-        response = @swift.connection.req("POST", URI.encode("/#{@name.to_s}"), {:headers=>headers} )
+        response = @swift.connection.req("POST", "/#{ERB::Util.url_encode(@name.to_s)}", {:headers=>headers} )
         true
       rescue OpenStack::Exception::ItemNotFound => not_found
         msg = "Cannot set metadata - container: \"#{@name}\" does not exist!.  #{not_found.message}"
@@ -110,10 +110,24 @@ module Swift
     # Returns an empty array if no object exist in the container.
     # if the request fails.
     def objects(params = {})
-      path = "/#{@name.to_s}"
-      path = (params.empty?)? path : OpenStack.get_query_params(params, [:limit, :marker, :prefix, :path, :delimiter], path)
-      response = @swift.connection.req("GET", URI.encode(path))
-      OpenStack.symbolize_keys(JSON.parse(response.body)).inject([]){|res, cur| res << cur[:name]; res }
+      objs_list = []
+      limit = params[:limit]
+      while true do
+        path = "/#{@name.to_s}"
+        params[:limit] = limit > 10_000 ? 10_000 : limit if limit
+        path = (params.empty?)? path : OpenStack.get_query_params(params, [:limit, :marker, :prefix, :path, :delimiter], path)
+        puts "GET: #{path}"
+        response = @swift.connection.req("GET", path)
+        objs = OpenStack.symbolize_keys(JSON.parse(response.body)).inject([]){|res, cur| res << cur[:name]; res }
+        objs_list += objs
+
+        break if objs.size == 0
+        if limit
+          limit -= objs.size
+        end
+        params[:marker] = objs.last
+      end
+      return objs_list
     end
     alias :list_objects :objects
 
@@ -133,10 +147,26 @@ module Swift
     #                   :bytes=>"22"}
     #      }
     def objects_detail(params = {})
-      path = "/#{@name.to_s}"
-      path = (params.empty?)? path : OpenStack.get_query_params(params, [:limit, :marker, :prefix, :path, :delimiter], path)
-      response = @swift.connection.req("GET", URI.encode(path))
-      OpenStack.symbolize_keys(JSON.parse(response.body)).inject({}){|res, current| res.merge!({current[:name]=>{:bytes=>current[:bytes].to_s, :content_type=>current[:content_type].to_s, :last_modified=>current[:last_modified], :hash=>current[:hash]}}) ; res }
+      objs_list = {}
+      limit = params[:limit]
+      while true do
+        path = "/#{ERB::Util.url_encode(@name.to_s)}"
+        params[:limit] = limit > 10_000 ? 10_000 : limit if limit
+        path = (params.empty?) ? path : OpenStack.get_query_params(params, [:limit, :marker, :prefix, :path, :delimiter], path)
+        response = @swift.connection.req("GET", path)
+        objs = OpenStack.symbolize_keys(JSON.parse(response.body))
+        objs.inject(objs_list) do |res, current|
+          res.merge!({current[:name] => {:bytes => current[:bytes].to_s, :content_type => current[:content_type].to_s, :last_modified => current[:last_modified], :hash => current[:hash]}})
+          res
+        end
+
+        break if objs.size == 0
+        if limit
+          limit -= objs.size
+        end
+        params[:marker] = objs.last[:name]
+      end
+      return objs_list
     end
     alias :list_objects_info :objects_detail
 
@@ -161,7 +191,7 @@ module Swift
     def object_exists?(objectname)
       path = "/#{@name.to_s}/#{objectname}"
       begin
-        response = @swift.connection.req("HEAD", URI.encode(path))
+        response = @swift.connection.req("HEAD", ERB::Util.url_encode(path))
         true
       rescue OpenStack::Exception::ItemNotFound
         false
@@ -196,7 +226,7 @@ module Swift
     def delete_object(objectname)
       path = "/#{@name.to_s}/#{objectname}"
       begin
-        response = @swift.connection.req("DELETE", URI.encode(path))
+        response = @swift.connection.req("DELETE", ERB::Util.url_encode(path))
         true
       rescue OpenStack::Exception::ItemNotFound => not_found
         msg = "The object: \"#{objectname}\" does not exist in container \"#{@name}\".  #{not_found.message}"

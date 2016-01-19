@@ -37,7 +37,7 @@ module Compute
     #   >> image.populate
     #   => true
     def populate
-      path = "/images/#{URI.escape(self.id.to_s)}"
+      path = "/images/#{ERB::Util.url_encode(self.id.to_s)}"
       response = @compute.connection.req("GET", path)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       data = JSON.parse(response.body)['image']
@@ -63,7 +63,7 @@ module Compute
     #   >> image.delete!
     #   => true
     def delete!
-      response = @compute.connection.csreq("DELETE",@compute.connection.service_host,"#{@compute.connection.service_path}/images/#{URI.escape(self.id.to_s)}",@compute.connection.service_port,@compute.connection.service_scheme)
+      response = @compute.connection.csreq("DELETE",@compute.connection.service_host,"#{@compute.connection.service_path}/images/#{ERB::Util.url_encode(self.id.to_s)}",@compute.connection.service_port,@compute.connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       true
     end

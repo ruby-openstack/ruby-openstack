@@ -20,7 +20,7 @@ module Compute
     #   >> flavor.name
     #   => "256 server"
     def initialize(compute,id)
-      response = compute.connection.csreq("GET",compute.connection.service_host,"#{compute.connection.service_path}/flavors/#{URI.escape(id.to_s)}",compute.connection.service_port,compute.connection.service_scheme)
+      response = compute.connection.csreq("GET",compute.connection.service_host,"#{compute.connection.service_path}/flavors/#{ERB::Util.url_encode(id.to_s)}",compute.connection.service_port,compute.connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       data = JSON.parse(response.body)['flavor']
       @id   = data['id']

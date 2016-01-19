@@ -22,13 +22,13 @@ module Swift
     # an existing Object via OpenStack::Swift::Container::object method or create a
     # new Object via OpenStack::Swift::Container::create_object method
     #
-    def initialize(container, objectname, force_exists = false)
+    def initialize(container, object_name, force_exists = false)
       @container = container
-      @containername = container.name
-      @name = objectname
+      @container_name = container.name
+      @name = object_name
 
       if force_exists
-        raise OpenStack::Exception::ItemNotFound.new("No Object \"#{@name}\" found in Container \"#{@containername}\"", "404", "") unless container.object_exists?(objectname)
+        raise OpenStack::Exception::ItemNotFound.new("No Object \"#{@name}\" found in Container \"#{@container_name}\"", "404", "") unless container.object_exists?(object_name)
       end
     end
 
@@ -45,19 +45,19 @@ module Swift
     # cont = os.container("foo_container")
     # cont.create_object("my_new_object", {}, "object data")
     #
-    def self.create(container, objectname, headers={}, data=nil)
+    def self.create(container, object_name, headers={}, data=nil)
       provided_headers = (headers[:metadata] || {}).inject({}){|res, (k,v)| ((k.to_s.match /^X-Object-Meta-/i) ? res[k.to_s]=v : res["X-Object-Meta-#{k.to_s}"]=v) ;res}
       provided_headers["content-type"] = headers[:content_type] unless headers[:content_type].nil?
       provided_headers["ETag"] = headers[:etag] unless headers[:etag].nil?
       provided_headers["X-Object-Manifest"] = headers[:manifest] unless headers[:manifest].nil?
       if data.nil? #just create an empty object
-        path = "/#{container.name}/#{objectname}"
+        path = StorageObject::safe_path(container.name, object_name)
         provided_headers["content-length"] = "0"
-        container.swift.connection.req("PUT", URI.encode(path), {:headers=>provided_headers})
+        container.swift.connection.req("PUT", path, {:headers=>provided_headers})
       else
-        self.new(container, objectname).write(data, provided_headers)
+        self.new(container, object_name).write(data, provided_headers)
       end
-      self.new(container, objectname)
+      self.new(container, object_name)
     end
 
     # Retrieves Metadata for the object
@@ -67,8 +67,8 @@ module Swift
     #  => {:manifest=>nil, :bytes=>"1918", :content_type=>"application/octet-stream", :metadata=>{"foo"=>"bar, "herpa"=>"derp"}, :etag=>"1e5b089a1d92052bcf759d86465143f8", :last_modified=>"Tue, 17 Apr 2012 08:46:35 GMT"}
     #
     def object_metadata
-      path = "/#{@containername}/#{@name}"
-      response = @container.swift.connection.req("HEAD", path)
+      response = @container.swift.connection.req("HEAD", url)
+      return nil unless response
       resphash = response.to_hash
       meta = { :bytes=>resphash["content-length"][0],
                :content_type=>resphash["content-type"][0],
@@ -129,12 +129,11 @@ module Swift
         range = sprintf("bytes=%d-%d", offset.to_i, (offset.to_i + size.to_i) - 1)
         headers['Range'] = range
       end
-      path = "/#{@containername}/#{@name}"
       begin
-        response = @container.swift.connection.req("GET", URI.encode(path), {:headers=>headers})
+        response = @container.swift.connection.req("GET", url, {:headers=>headers})
         response.body
       rescue OpenStack::Exception::ItemNotFound => not_found
-        msg = "No Object \"#{@name}\" found in Container \"#{@containername}\".  #{not_found.message}"
+        msg = "No Object \"#{@name}\" found in Container \"#{@container_name}\".  #{not_found.message}"
         raise OpenStack::Exception::ItemNotFound.new(msg, not_found.response_code, not_found.response_body)
       end
     end
@@ -160,7 +159,7 @@ module Swift
         headers['Range'] = range
       end
       server = @container.swift.connection.service_host
-      path = @container.swift.connection.service_path + URI.encode("/#{@containername}/#{@name}")
+      path = @container.swift.connection.service_path + url
       port = @container.swift.connection.service_port
       scheme = @container.swift.connection.service_scheme
       response = @container.swift.connection.csreq("GET", server, path, port, scheme, headers, nil, 0, &block)
@@ -183,11 +182,10 @@ module Swift
     def set_metadata(metadatahash)
       headers  = metadatahash.inject({}){|res, (k,v)| ((k.to_s.match /^X-Object-Meta-/i) ? res[k.to_s]=v : res["X-Object-Meta-#{k.to_s}"]=v ) ;res}
       headers['content-type'] = 'application/json'
-      path = "/#{@containername}/#{@name}"
       begin
-        response = @container.swift.connection.req("POST", URI.encode(path), {:headers=>headers})
+        response = @container.swift.connection.req("POST", url, {:headers=>headers})
       rescue OpenStack::Exception::ItemNotFound => not_found
-        msg = "Can't set metadata: No Object \"#{@name}\" found in Container \"#{@containername}\".  #{not_found.message}"
+        msg = "Can't set metadata: No Object \"#{@name}\" found in Container \"#{@container_name}\".  #{not_found.message}"
         raise OpenStack::Exception::ItemNotFound.new(msg, not_found.response_code, not_found.response_body)
       end
       true
@@ -211,11 +209,10 @@ module Swift
     #
     def set_manifest(manifest)
       headers = {'X-Object-Manifest' => manifest}
-      path = "/#{@containername}/#{@name}"
       begin
-        response = @container.swift.connection.req("POST", URI.encode(path), {:headers=>headers})
+        response = @container.swift.connection.req("POST", url, {:headers=>headers})
       rescue OpenStack::Exception::ItemNotFound => not_found
-        msg = "Can't set manifest: No Object \"#{@name}\" found in Container \"#{@containername}\".  #{not_found.message}"
+        msg = "Can't set manifest: No Object \"#{@name}\" found in Container \"#{@container_name}\".  #{not_found.message}"
         raise OpenStack::Exception::ItemNotFound.new(msg, not_found.response_code, not_found.response_body)
       end
       true
@@ -244,7 +241,7 @@ module Swift
     #
     def write(data, headers = {})
       server = @container.swift.connection.service_host
-      path = @container.swift.connection.service_path + URI.encode("/#{@containername}/#{@name}")
+      path = @container.swift.connection.service_path + url
       port = @container.swift.connection.service_port
       scheme = @container.swift.connection.service_scheme
       body = (data.is_a?(String))? StringIO.new(data) : data
@@ -275,13 +272,13 @@ module Swift
     def copy(object_name, container_name, headers = {})
       provided_headers = (headers[:metadata] || {}).inject({}){|res, (k,v)| ((k.to_s.match /^X-Object-Meta-/i) ? res[k.to_s]=v : res["X-Object-Meta-#{k.to_s}"]=v) ;res}
       provided_headers["content-type"] = headers[:content_type] unless headers[:content_type].nil?
-      provided_headers["X-Copy-From"] = "/#{@containername}/#{@name}"
+      provided_headers["X-Copy-From"] = "/#{@container_name}/#{@name}"
       provided_headers["content-length"] = "0"
-      path = "/#{container_name}/#{object_name}"
+      path = StorageObject::safe_path(container_name, object_name)
       begin
-        response = @container.swift.connection.req("PUT", URI.encode(path), {:headers=>provided_headers})
+        response = @container.swift.connection.req("PUT", path, {:headers=>provided_headers})
       rescue OpenStack::Exception::ItemNotFound => not_found
-        msg = "Can't copy \"#{@name}\": No Object \"#{@name}\" found in Container \"#{@containername}\".  #{not_found.message}"
+        msg = "Can't copy \"#{@name}\": No Object \"#{@name}\" found in Container \"#{@container_name}\".  #{not_found.message}"
         raise OpenStack::Exception::ItemNotFound.new(msg, not_found.response_code, not_found.response_body)
       end
       OpenStack::Swift::StorageObject.new(@container.swift.container(container_name), object_name)
@@ -304,6 +301,21 @@ module Swift
 
     def to_s # :nodoc:
       @name
+    end
+
+    #
+    # Create a url encoded path
+    #
+    def self.safe_path(container_name, object_name)
+      "/#{ERB::Util.url_encode(container_name)}/#{ERB::Util.url_encode(object_name)}"
+    end
+
+    private
+    #
+    # Return the url encoded path of the instance
+    #
+    def url
+      StorageObject::safe_path(@container_name, @name)
     end
 
   end
