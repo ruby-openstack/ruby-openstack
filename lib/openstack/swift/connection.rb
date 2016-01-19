@@ -168,8 +168,14 @@ module Swift
       @file = data
     end
 
-    def read(foo)
-      @file.read(@size)
+    #for ruby 2.x
+    def read(length, buffer=nil)
+      chunk = @file.read(length)
+
+      return nil if chunk.nil?
+      buffer << chunk if buffer
+
+      chunk
     end
 
     def eof!
