@@ -73,7 +73,7 @@ module Swift
     #   cf.containers(2,'cftest')
     #   => ["test", "video"]
     def containers(limit = nil, marker = nil)
-      path = OpenStack.get_query_params({:limit=>limit, :marker=>marker}, [:limit, :marker], "")
+      path = OpenStack.get_query_params({:limit=>limit, :marker=>marker, :format=>'json'}, [:limit, :marker, :format], "")
       response = @connection.req("GET", URI.encode(path))
       OpenStack.symbolize_keys(JSON.parse(response.body)).inject([]){|res,cur| res << cur[:name]; res }
     end
@@ -89,7 +89,7 @@ module Swift
     #   => { "container1" => { :bytes => "36543", :count => "146" },
     #        "container2" => { :bytes => "105943", :count => "25" } }
     def containers_detail(limit = nil, marker = nil)
-      path = OpenStack.get_query_params({:limit=>limit, :marker=>marker}, [:limit, :marker], "")
+      path = OpenStack.get_query_params({:limit=>limit, :marker=>marker, :format=>'json'}, [:limit, :marker, :format], "")
       response = @connection.req("GET", URI.encode(path))
       OpenStack.symbolize_keys(JSON.parse(response.body)).inject({}){|res,current| res.merge!({current[:name]=>{:bytes=>current[:bytes].to_s,:count=>current[:count].to_s}}) ; res }
     end
