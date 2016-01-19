@@ -1,7 +1,6 @@
-require File.dirname(__FILE__) + '/test_helper'
+require File.dirname(__FILE__) + '/../test_helper'
 
 class AuthenticationTest < Test::Unit::TestCase
-
   def test_good_authentication
     response = {'x-server-management-url' => 'http://server-manage.example.com/path', 'x-auth-token' => 'dummy_token'}
     response.stubs(:code).returns('204')
@@ -45,7 +44,7 @@ class AuthenticationTest < Test::Unit::TestCase
   private
 
   def v2_auth_connection_stub
-    stub(:authuser => 'good_user', :auth_method => "password",:authtenant => {:type=>"tenantName", :value=>'good_tenant'} , :regions_list => {"North"=> [{:service=>"compute", :versionId=>nil}, {:service=>"nova", :versionId=>nil}], "South"=>[{:service=>"compute", :versionId=>nil}, {:service=>"nova", :versionId=>nil}] }, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v2.0", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo', :service_type => "compute", :service_name => "cloudServers", :region => "South", :retries => 3, :is_debug => nil)
+    stub(:authuser => 'good_user', :auth_method => "password",:authtenant => {:type=>"tenantName", :value=>'good_tenant'} , :regions_list => {"North"=> [{:service=>"compute", :versionId=>nil}, {:service=>"nova", :versionId=>nil}], "South"=>[{:service=>"compute", :versionId=>nil}, {:service=>"nova", :versionId=>nil}] }, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v2.0", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo', :service_type => "compute", :service_name => "cloudServers", :region => "South", :retries => 3, :is_debug => nil, :endpoint_type => 'publicURL')
   end
 
   def get_test_auth_server

@@ -1,7 +1,6 @@
-require File.dirname(__FILE__) + '/test_helper'
+require File.dirname(__FILE__) + '/../test_helper'
 
 class ServersTest < Test::Unit::TestCase
-
   include TestConnection
 
   def setup
@@ -9,7 +8,6 @@ class ServersTest < Test::Unit::TestCase
   end
 
   def test_list_servers
-
     json_response = %{{
       "servers" : [
         {
@@ -65,7 +63,6 @@ class ServersTest < Test::Unit::TestCase
   end
 
   def test_get_server
-
     server=get_test_server
     assert_equal "sample-server", server.name
     assert_equal "2", server.image['id']
@@ -76,11 +73,9 @@ class ServersTest < Test::Unit::TestCase
     assert_equal "67.23.10.132", server.addresses[:public][0].address
     assert_equal "67.23.10.131", server.addresses[:public][1].address
     assert_equal "10.176.42.16", server.addresses[:private][0].address
-
   end
 
   def test_rebuild_server
-
     json_response = %{{
     "server": {
         "id": "52415800-8b69-11e0-9b19-734f565bc83b",
@@ -170,12 +165,10 @@ class ServersTest < Test::Unit::TestCase
 
     assert_not_nil server.adminPass
     assert_equal "newName", server.name
-
   end
 
 private
   def get_test_server
-
     json_response = %{{
       "server" : {
           "id" : 1234,
@@ -206,5 +199,4 @@ private
     @comp.connection.stubs(:csreq).returns(response)
     return @comp.server(1234)
   end
-
 end

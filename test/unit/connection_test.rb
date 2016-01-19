@@ -1,7 +1,6 @@
-require File.dirname(__FILE__) + '/test_helper'
+require File.dirname(__FILE__) + '/../test_helper'
 
 class ComputeConnectionTest < Test::Unit::TestCase
-
   def setup
     connection = stub()
     OpenStack::Authentication.stubs(:init).returns(connection)
@@ -35,5 +34,4 @@ class ComputeConnectionTest < Test::Unit::TestCase
       conn = OpenStack::Connection.create(:username => "test_account", :api_key => "AABBCCDD11", :auth_url => "https://a.b.c")
       assert_not_nil conn, "Connection.new returned nil."
   end
-
 end
