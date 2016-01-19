@@ -27,6 +27,7 @@ class Connection
 
     attr_reader   :http
     attr_reader   :is_debug
+    attr_reader   :endpoint_type
 
     # Creates and returns a new Connection object, depending on the service_type
     # passed in the options:
@@ -108,6 +109,7 @@ class Connection
       @authok = false
       @http = {}
       @quantum_version = 'v2.0' if @service_type == 'network'
+      @endpoint_type = options[:endpoint_type] || "publicURL"
     end
 
     #specialised from of csreq for PUT object... uses body_stream if possible
@@ -324,23 +326,23 @@ class AuthV20
           if connection.region
             endpoints.each do |ep|
               if ep["region"] and ep["region"].upcase == connection.region.upcase
-                @uri = URI.parse(ep["publicURL"])
+                @uri = URI.parse(ep[connection.endpoint_type])
               end
             end
           else
-            @uri = URI.parse(endpoints[0]["publicURL"])
+            @uri = URI.parse(endpoints[0][connection.endpoint_type])
           end
           if @uri == ""
             raise OpenStack::Exception::Authentication, "No API endpoint for region #{connection.region}"
           else
             if @version #already got one version of endpoints
-              current_version = get_version_from_response(service)
+              current_version = get_version_from_response(service,connection.endpoint_type)
               if @version.to_f > current_version.to_f
                 next
               end
             end
             #grab version to check next time round for multi-version deployments
-            @version = get_version_from_response(service)
+            @version = get_version_from_response(service,connection.endpoint_type)
             connection.service_host = @uri.host
             connection.service_path = @uri.path
             connection.service_port = @uri.port
@@ -356,8 +358,8 @@ class AuthV20
     server.finish if server.started?
   end
 
-  def get_version_from_response(service)
-    service["endpoints"].first["versionId"] || parse_version_from_endpoint(service["endpoints"].first["publicURL"])
+  def get_version_from_response(service,endpoint_type)
+    service["endpoints"].first["versionId"] || parse_version_from_endpoint(service["endpoints"].first[endpoint_type])
   end
 
   #IN  --> https://az-2.region-a.geo-1.compute.hpcloudsvc.com/v1.1/46871569847393
