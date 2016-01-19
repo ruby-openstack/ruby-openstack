@@ -22,6 +22,8 @@ class Connection
     attr_reader   :service_type
     attr_reader   :proxy_host
     attr_reader   :proxy_port
+    attr_reader   :ca_cert
+    attr_reader   :ssl_version
     attr_reader   :region
     attr_reader   :regions_list #e.g. os.connection.regions_list == {"region-a.geo-1" => [ {:service=>"object-store", :versionId=>"1.0"}, {:service=>"identity", :versionId=>"2.0"}], "region-b.geo-1"=>[{:service=>"identity", :versionId=>"2.0"}] }
 
@@ -52,6 +54,8 @@ class Connection
     #   :retry_auth - Whether to retry if your auth token expires (defaults to true)
     #   :proxy_host - If you need to connect through a proxy, supply the hostname here
     #   :proxy_port - If you need to connect through a proxy, supply the port here
+    #   :ca_cert - path to a CA chain in PEM format
+    #   :ssl_version - explicitly set an version (:SSLv3 etc, see  OpenSSL::SSL::SSLContext::METHODS)
     #
     # The options hash is used to create a new OpenStack::Connection object
     # (private constructor) and this is passed to the constructor of OpenStack::Compute::Connection
@@ -105,6 +109,8 @@ class Connection
       @retry_auth = options[:retry_auth]
       @proxy_host = options[:proxy_host]
       @proxy_port = options[:proxy_port]
+      @ca_cert = options[:ca_cert]
+      @ssl_version = options[:ssl_version]
       @authok = false
       @http = {}
       @quantum_version = 'v2.0' if @service_type == 'network'
@@ -232,6 +238,15 @@ class Connection
           if scheme == "https"
             @http[server].use_ssl = true
             @http[server].verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+            # use the ca_cert if were given one, and make sure we verify!
+            if ! @ca_cert.nil?
+              @http[server].ca_file = @ca_cert
+              @http[server].verify_mode = OpenSSL::SSL::VERIFY_PEER
+            end
+
+            # explicitly set the SSL version to use
+            @http[server].ssl_version= @ssl_version if ! @ssl_version.nil?
           end
           @http[server].start
         rescue
@@ -280,6 +295,15 @@ class AuthV20
       if connection.auth_scheme == "https"
         server.use_ssl = true
         server.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+        # use the ca_cert if were given one, and make sure we verify!
+        if !connection.ca_cert.nil?
+          server.ca_file = connection.ca_cert
+          server.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        end
+
+        # explicitly set the SSL version to use
+        server.ssl_version = connection.ssl_version if !connection.ssl_version.nil?
       end
       server.start
     rescue
@@ -381,6 +405,15 @@ class AuthV10
       if connection.auth_scheme == "https"
         server.use_ssl = true
         server.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+        # use the ca_cert if were given one, and make sure to verify!
+        if !connection.ca_cert.nil?
+          server.ca_file = connection.ca_cert
+          server.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        end
+
+        # explicitly set the SSL version to use
+        server.ssl_version = connection.ssl_version if !connection.ssl_version.nil?
       end
       server.start
     rescue
