@@ -88,6 +88,31 @@ module Volume
       true
     end
 
+    # [ {:extra_specs=>{:volume_backend_name=>"volumes-standard"}, :name=>"slow", :id=>"b3a104b6-fe70-4450-8681-e911a153f41f"},
+    #   {:extra_specs=>{:volume_backend_name=>"volumes-speed"}, :name=>"fast", :id=>"0e278952-9baa-4aa8-88a7-fe8387f1d86c"} ]
+    def list_volume_types
+      response = @connection.req('GET', '/types')
+      OpenStack.symbolize_keys(JSON.parse(response.body)['volume_types'])
+    end
+    alias :types :list_volume_types
+
+    # get_quotas(1)
+    # => { "volumes_slow"=>-1, "snapshots_slow"=>-1, "gigabytes_slow"=>-1,
+    #      "volumes_fast"=>-1, "snapshots_fast"=>-1, "gigabytes_fast"=>-1,
+    #      "volumes"=>10, "snapshots"=>10, "gigabytes"=>1001, "id"=>"1"}
+    def get_quotas(tenant_id)
+      response = @connection.req('GET', "/os-quota-sets/#{tenant_id}")
+      JSON.parse(response.body)['quota_set']
+    end
+
+    # quota_set = { gigabytes: 500, gigabytes_slow: 200, gigabytes_fast: 300 }
+    # cinder.update_quotas(tenant_id: 1, quota_set: quota_set)
+    def update_quotas(tenant_id:, quota_set:)
+      req_body = JSON.generate({'quota_set' => quota_set})
+      response = @connection.req('PUT', "/os-quota-sets/#{tenant_id}", data: req_body)
+      JSON.parse(response.body)['quota_set']
+    end
+
     private
 
     #fudge... not clear if volumes support is available as 'native' volume API or
