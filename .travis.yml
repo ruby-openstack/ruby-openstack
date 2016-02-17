@@ -9,4 +9,4 @@ script:
   - bundle exec rake test
 notifications:
   email:
-    - mi@mifo.sk
+    - aaron.fischer@marbis.net

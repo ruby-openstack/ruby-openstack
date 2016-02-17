@@ -57,6 +57,7 @@ class Connection
     #   :proxy_port - If you need to connect through a proxy, supply the port here
     #   :ca_cert - path to a CA chain in PEM format
     #   :ssl_version - explicitly set an version (:SSLv3 etc, see  OpenSSL::SSL::SSLContext::METHODS)
+    #   :is_debug - Only for development purpose for debug output
     #
     # The options hash is used to create a new OpenStack::Connection object
     # (private constructor) and this is passed to the constructor of OpenStack::Compute::Connection

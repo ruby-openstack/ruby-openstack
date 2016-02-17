@@ -1,23 +1,6 @@
 #!/usr/bin/env ruby
-#
-# == Ruby OpenStack API
-#
-# See COPYING for license information.
-# ----
-#
-# === Documentation & Examples
-# To begin reviewing the available methods and examples, view the README.rdoc file
-#
-# Example:
-# os = OpenStack::Connection.create({:username => "herp@derp.com", :api_key=>"password",
-#               :auth_url => "https://region-a.geo-1.identity.cloudsvc.com:35357/v2.0/",
-#               :authtenant=>"herp@derp.com-default-tenant", :service_type=>"object-store")
-#
-# will return a handle to the object-storage service swift. Alternatively, passing
-# :service_type=>"compute" will return a handle to the compute service nova.
 
 module OpenStack
-
   require 'net/http'
   require 'net/https'
   require 'uri'
@@ -51,6 +34,7 @@ module OpenStack
   require 'openstack/network/router'
   require 'openstack/network/port'
   require 'openstack/version'
+
   # Constants that set limits on server creation
   MAX_PERSONALITY_ITEMS = 5
   MAX_PERSONALITY_FILE_SIZE = 10240
@@ -111,5 +95,4 @@ module OpenStack
     end
     url
   end
-
 end
