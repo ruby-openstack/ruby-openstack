@@ -77,6 +77,8 @@ class Connection
           OpenStack::Image::Connection.new(connection)
         when "network"
           OpenStack::Network::Connection.new(connection)
+        when "identity"
+          OpenStack::Identity::Connection.new(connection)
        else
           raise Exception::InvalidArgument, "Invalid :service_type parameter: #{@service_type}"
       end
