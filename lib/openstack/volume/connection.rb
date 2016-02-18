@@ -106,8 +106,8 @@ module Volume
     end
 
     # quota_set = { gigabytes: 500, gigabytes_slow: 200, gigabytes_fast: 300 }
-    # cinder.update_quotas(tenant_id: 1, quota_set: quota_set)
-    def update_quotas(tenant_id:, quota_set:)
+    # cinder.update_quotas(1, quota_set)
+    def update_quotas(tenant_id, quota_set)
       req_body = JSON.generate({'quota_set' => quota_set})
       response = @connection.req('PUT', "/os-quota-sets/#{tenant_id}", data: req_body)
       JSON.parse(response.body)['quota_set']

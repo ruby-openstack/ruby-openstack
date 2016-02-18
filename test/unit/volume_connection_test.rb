@@ -125,7 +125,7 @@ class VolumeConnectionTest < Test::Unit::TestCase
     @cinder.connection.stubs(:req).returns(response)
 
     quota_set = { gigabytes: 500, gigabytes_slow: 200, gigabytes_fast: 300 }
-    quotas = @cinder.update_quotas(tenant_id: 1, quota_set: quota_set)
+    quotas = @cinder.update_quotas(1, quota_set)
     assert_equal quotas['volumes'], 10
     assert_equal quotas['snapshots'], 10
     assert_equal quotas['gigabytes'], 500
