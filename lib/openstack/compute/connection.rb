@@ -179,9 +179,39 @@ module Compute
     #   >> flavor = cs.flavor(1)
     #   => #<OpenStack::Compute::Flavor:0x10156dcc0 @name="256 server", @disk=10, @id=1, @ram=256>
     def get_flavor(id)
-      OpenStack::Compute::Flavor.new(self,id)
+      response = @connection.req('GET', "/flavors/#{id}")
+      flavor_info = JSON.parse(response.body)['flavor']
+      OpenStack::Compute::Flavor.new(flavor_info)
     end
     alias :flavor :get_flavor
+
+    # nova.create_flavor({name: 'small', vcpus: 2, ram: 1024, disk: 1}, true)
+    # :name - must be unique, :ram - MB, :disk - GB
+    # => #<OpenStack::Compute::Flavor:0x007ff95333e268 @id="0c0c393b-3acd-4569-baae-7a7afbe398f6", @name="small", @ram=1024, @disk=1, @vcpus=2>
+    def create_flavor(options, public = false)
+      raise OpenStack::Exception::MissingArgument, 'Flavor name, vcpus, ram and disk, must be supplied' unless (options[:name] && options[:vcpus] && options[:ram] && options[:disk])
+      data = JSON.generate(:flavor => options.merge!({'os-flavor-access:is_public' => public}))
+      response = @connection.req('POST', '/flavors', {data: data})
+      flavor_info = JSON.parse(response.body)['flavor']
+      OpenStack::Compute::Flavor.new(flavor_info)
+    end
+
+    def delete_flavor(id)
+      response = @connection.req('DELETE', "/flavors/#{id}")
+      true
+    end
+
+    def add_tenant_to_flavor(flavor_id, tenant_id)
+      data = JSON.generate({'addTenantAccess' => {'tenant' => tenant_id}})
+      response = @connection.req('POST', "/flavors/#{flavor_id}/action", {data: data})
+      JSON.parse(response.body)
+    end
+
+    def delete_tenant_from_flavor(flavor_id, tenant_id)
+      data = JSON.generate({'removeTenantAccess' => {'tenant' => tenant_id}})
+      response = @connection.req('POST', "/flavors/#{flavor_id}/action", {data: data})
+      JSON.parse(response.body)
+    end
 
     # Returns the current state of the programatic API limits.  Each account has certain limits on the number of resources
     # allowed in the account, and a rate of API operations.
