@@ -1,3 +1,5 @@
+require 'cgi'
+
 class Object
   # Alias of <tt>to_s</tt>.
   def to_param
@@ -7,7 +9,6 @@ class Object
   # Converts an object into a string suitable for use as a URL query string,
   # using the given <tt>key</tt> as the param name.
   def to_query(key)
-    require 'cgi' unless defined?(CGI) && defined?(CGI::escape)
     "#{CGI.escape(key.to_param)}=#{CGI.escape(to_param.to_s)}"
   end
 end
@@ -37,7 +38,7 @@ class Array
   # Calls <tt>to_param</tt> on all its elements and joins the result with
   # slashes. This is used by <tt>url_for</tt> in Action Pack.
   def to_param
-    collect { |e| e.to_param }.join '/'
+    collect(&:to_param).join '/'
   end
 
   # Converts an array into a string suitable for use as a URL query string,
