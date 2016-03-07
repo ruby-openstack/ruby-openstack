@@ -33,17 +33,19 @@ module Compute
 
     # Returns an array of hashes, one for each server that exists under this account.  The hash keys are :name and :id.
     #
-    # You can also provide :limit and :offset parameters to handle pagination.
+    # You can also provide :limit and :offset and :"changes-since" and :image and :flavor and :name and :status
+    # and :host and :limit and :marker parameters to handle pagination.
+    # http://developer.openstack.org/api-ref-compute-v2.1.html
     #
     #   >> cs.list_servers
     #   => [{:name=>"MyServer", :id=>110917}]
     #
-    #   >> cs.list_servers(:limit => 2, :offset => 3)
+    #   >> cs.list_servers(:limit => 2, :offset => 3, :name => "MyServer", :status => "ACTIVE")
     #   => [{:name=>"demo-standingcloud-lts", :id=>168867},
     #       {:name=>"demo-aicache1", :id=>187853}]
     def list_servers(options = {})
       anti_cache_param="cacheid=#{Time.now.to_i}"
-      path = OpenStack.paginate(options).empty? ? "#{@connection.service_path}/servers?#{anti_cache_param}" : "#{@connection.service_path}/servers?#{OpenStack.paginate(options)}&#{anti_cache_param}"
+      path = options.empty? ? "#{@connection.service_path}/servers?#{anti_cache_param}" : "#{@connection.service_path}/servers?#{options.to_query}&#{anti_cache_param}"
       response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       OpenStack.symbolize_keys(JSON.parse(response.body)["servers"])
@@ -54,15 +56,17 @@ module Compute
     # includes public and private IP addresses, status, hostID, and more.  All hash keys are symbols except for the metadata
     # hash, which are verbatim strings.
     #
-    # You can also provide :limit and :offset parameters to handle pagination.
+    # You can also provide :limit and :offset and :"changes-since" and :image and :flavor and :name and :status and :host
+    # and :limit and :marker parameters to handle pagination.
+    # http://developer.openstack.org/api-ref-compute-v2.1.html
     #   >> cs.list_servers_detail
     #   => [{:name=>"MyServer", :addresses=>{:public=>["67.23.42.37"], :private=>["10.176.241.237"]}, :metadata=>{"MyData" => "Valid"}, :imageRef=>10, :progress=>100, :hostId=>"36143b12e9e48998c2aef79b50e144d2", :flavorRef=>1, :id=>110917, :status=>"ACTIVE"}]
     #
-    #   >> cs.list_servers_detail(:limit => 2, :offset => 3)
+    #   >> cs.list_servers_detail(:limit => 2, :offset => 3, :name => "MyServer", :flavor => 1, :status => "ACTIVE")
     #   => [{:status=>"ACTIVE", :imageRef=>10, :progress=>100, :metadata=>{}, :addresses=>{:public=>["x.x.x.x"], :private=>["x.x.x.x"]}, :name=>"demo-standingcloud-lts", :id=>168867, :flavorRef=>1, :hostId=>"xxxxxx"},
     #       {:status=>"ACTIVE", :imageRef=>8, :progress=>100, :metadata=>{}, :addresses=>{:public=>["x.x.x.x"], :private=>["x.x.x.x"]}, :name=>"demo-aicache1", :id=>187853, :flavorRef=>3, :hostId=>"xxxxxx"}]
     def list_servers_detail(options = {})
-      path = OpenStack.paginate(options).empty? ? "#{@connection.service_path}/servers/detail" : "#{@connection.service_path}/servers/detail?#{OpenStack.paginate(options)}"
+      path = options.empty? ? "#{@connection.service_path}/servers/detail" : "#{@connection.service_path}/servers/detail?#{options.to_query}"
       response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       json_server_list = JSON.parse(response.body)["servers"]
@@ -127,18 +131,19 @@ module Compute
     # Returns an array of hashes listing available server images that you have access too,
     # including stock OpenStack Compute images and any that you have created.  The "id" key
     # in the hash can be used where imageRef is required. You can also provide :limit and
-    # :offset parameters to handle pagination.
+    # :offset and :"changes-since" and :server and :name and :status :minDisk and :minRam
+    # and :type and :limit and :marker parameters to handle pagination.
     #
     #   >> cs.list_images
     #   => [{:name=>"CentOS 5.2", :id=>2, :updated=>"2009-07-20T09:16:57-05:00", :status=>"ACTIVE", :created=>"2009-07-20T09:16:57-05:00"},
     #       {:name=>"Gentoo 2008.0", :id=>3, :updated=>"2009-07-20T09:16:57-05:00", :status=>"ACTIVE", :created=>"2009-07-20T09:16:57-05:00"},...
     #
-    #   >> cs.list_images(:limit => 3, :offset => 2)
+    #   >> cs.list_images(:limit => 3, :offset => 2, :status => "ACTIVE")
     #   => [{:status=>"ACTIVE", :name=>"Fedora 11 (Leonidas)", :updated=>"2009-12-08T13:50:45-06:00", :id=>13},
     #       {:status=>"ACTIVE", :name=>"CentOS 5.3", :updated=>"2009-08-26T14:59:52-05:00", :id=>7},
     #       {:status=>"ACTIVE", :name=>"CentOS 5.4", :updated=>"2009-12-16T01:02:17-06:00", :id=>187811}]
     def list_images(options = {})
-      path = OpenStack.paginate(options).empty? ? "#{@connection.service_path}/images/detail" : "#{@connection.service_path}/images/detail?#{OpenStack.paginate(options)}"
+      path = options.empty? ? "#{@connection.service_path}/images/detail" : "#{@connection.service_path}/images/detail?#{options.to_query}"
       response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       OpenStack.symbolize_keys(JSON.parse(response.body)['images'])
@@ -157,6 +162,7 @@ module Compute
     # Returns an array of hashes listing all available server flavors.  The :id key in the hash can be used when flavorRef is required.
     #
     # You can also provide :limit and :offset parameters to handle pagination.
+    # http://developer.openstack.org/api-ref-compute-v2.1.html
     #
     #   >> cs.list_flavors
     #   => [{:name=>"256 server", :id=>1, :ram=>256, :disk=>10},
@@ -167,7 +173,7 @@ module Compute
     #       {:ram=>2048, :disk=>80, :name=>"2GB server", :id=>4},
     #       {:ram=>4096, :disk=>160, :name=>"4GB server", :id=>5}]
     def list_flavors(options = {})
-      path = OpenStack.paginate(options).empty? ? "#{@connection.service_path}/flavors/detail" : "#{@connection.service_path}/flavors/detail?#{OpenStack.paginate(options)}"
+      path = options.empty? ? "#{@connection.service_path}/flavors/detail" : "#{@connection.service_path}/flavors/detail?#{options.to_query}"
       response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       OpenStack.symbolize_keys(JSON.parse(response.body)['flavors'])
@@ -197,7 +203,7 @@ module Compute
     end
 
     def delete_flavor(id)
-      response = @connection.req('DELETE', "/flavors/#{id}")
+      @connection.req('DELETE', "/flavors/#{id}")
       true
     end
 
@@ -242,12 +248,12 @@ module Compute
       OpenStack.symbolize_keys(JSON.parse(response.body)['limits'])
     end
 
-# ==============================
-#  API EXTENSIONS
-#
-#  http://nova.openstack.org/api_ext/index.html
-#  http://api.openstack.org/ (grep 'Compute API Extensions')
-#
+    # ==============================
+    #  API EXTENSIONS
+    #
+    #  http://nova.openstack.org/api_ext/index.html
+    #  http://api.openstack.org/ (grep 'Compute API Extensions')
+    #
 
 
     #query the openstack provider for any implemented extensions to the compute API
@@ -404,7 +410,7 @@ module Compute
 
     def delete_security_group(id)
       raise OpenStack::Exception::NotImplemented.new("os-security-groups not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
-      response = @connection.req("DELETE", "/os-security-groups/#{id}")
+      @connection.req("DELETE", "/os-security-groups/#{id}")
       true
     end
 
@@ -422,15 +428,15 @@ module Compute
 
     def delete_security_group_rule(id)
       raise OpenStack::Exception::NotImplemented.new("os-security-groups not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-security-groups"] or api_extensions[:security_groups]
-      response = @connection.req("DELETE", "/os-security-group-rules/#{id}")
+      @connection.req("DELETE", "/os-security-group-rules/#{id}")
       true
     end
 
-#VOLUMES - attach detach
+    #VOLUMES - attach detach
     def attach_volume(server_id, volume_id, device_id)
       raise OpenStack::Exception::NotImplemented.new("os-volumes not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-volumes"]
       data = JSON.generate(:volumeAttachment => {"volumeId" => volume_id, "device"=> device_id})
-      response = @connection.req("POST", "/servers/#{server_id}/os-volume_attachments", {:data=>data})
+      @connection.req("POST", "/servers/#{server_id}/os-volume_attachments", {:data=>data})
       true
     end
 
@@ -442,13 +448,13 @@ module Compute
 
     def detach_volume(server_id, attachment_id)
       raise OpenStack::Exception::NotImplemented.new("os-volumes not implemented by #{@connection.http.keys.first}", 501, "NOT IMPLEMENTED") unless api_extensions[:"os-volumes"]
-      response = @connection.req("DELETE", "/servers/#{server_id}/os-volume_attachments/#{attachment_id}")
+      @connection.req("DELETE", "/servers/#{server_id}/os-volume_attachments/#{attachment_id}")
       true
     end
 
 
-#FLOATING IPs:
-  #list all float ips associated with tennant or account
+    #FLOATING IPs:
+    #list all float ips associated with tennant or account
     def get_floating_ips
       check_extension("os-floating-ips")
       response = @connection.req("GET", "/os-floating-ips")
@@ -466,7 +472,6 @@ module Compute
     end
     alias :floating_ip :get_floating_ip
 
-
     #can optionally pass the :pool parameter
     def create_floating_ip(opts={})
       check_extension("os-floating-ips")
@@ -480,7 +485,7 @@ module Compute
     #delete or deallocate a floating IP using its id
     def delete_floating_ip(id)
       check_extension("os-floating-ips")
-      response = @connection.req("DELETE", "/os-floating-ips/#{id}")
+      @connection.req("DELETE", "/os-floating-ips/#{id}")
       true
     end
 
@@ -490,7 +495,7 @@ module Compute
       #first get the address:
       addr = get_floating_ip(opts[:ip_id]).ip
       data = JSON.generate({:addFloatingIp=>{:address=>addr}})
-      response = @connection.req("POST", "/servers/#{opts[:server_id]}/action", {:data=>data})
+      @connection.req("POST", "/servers/#{opts[:server_id]}/action", {:data=>data})
       true
     end
 
@@ -499,14 +504,14 @@ module Compute
       #first get the address:
       addr = get_floating_ip(opts[:ip_id]).ip
       data = JSON.generate({:removeFloatingIp=>{:address=>addr}})
-      response = @connection.req("POST", "/servers/#{opts[:server_id]}/action", {:data=>data})
+      @connection.req("POST", "/servers/#{opts[:server_id]}/action", {:data=>data})
       true
     end
 
     def get_floating_ip_polls
       check_extension 'os-floating-ip-pools'
       response = @connection.req('GET', '/os-floating-ip-pools')
-      res = JSON.parse(response.body)['floating_ip_pools']
+      JSON.parse(response.body)['floating_ip_pools']
     end
 
     def get_floating_ips_bulk
@@ -531,7 +536,7 @@ module Compute
       data = JSON.generate(opts)
       check_extension 'os-floating-ips-bulk'
       response = @connection.req('POST', '/os-floating-ips-bulk/delete', {:data => data})
-      res = JSON.generate(response)
+      JSON.generate(response)
     end
 
     private
@@ -541,7 +546,7 @@ module Compute
       true
     end
 
-end
+  end
 
 end
 end

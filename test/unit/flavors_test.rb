@@ -37,6 +37,43 @@ class FlavorsTest < Test::Unit::TestCase
     assert_equal flavor.vcpus, 2
   end
 
+  def test_list_flavors
+    json_response = %{{
+      "flavors": [
+          {
+              "OS-FLV-DISABLED:disabled": false,
+              "disk": 1,
+              "OS-FLV-EXT-DATA:ephemeral": 0,
+              "os-flavor-access:is_public": true,
+              "id": "1",
+              "links": [
+                  {
+                      "href": "http://openstack.example.com/v2.1/openstack/flavors/1",
+                      "rel": "self"
+                  },
+                  {
+                      "href": "http://openstack.example.com/openstack/flavors/1",
+                      "rel": "bookmark"
+                  }
+              ],
+              "name": "m1.tiny",
+              "ram": 512,
+              "swap": "",
+              "vcpus": 1
+          }
+      ]
+    }}
+    response = mock()
+    response.stubs(:code => "200", :body => json_response)
+    @comp.connection.stubs(:csreq).returns(response)
+    flavor = @comp.list_flavors(limit: 1)
+    assert_equal flavor[0][:id], '1'
+    assert_equal flavor[0][:name], 'm1.tiny'
+    assert_equal flavor[0][:ram], 512
+    assert_equal flavor[0][:swap], ""
+    assert_equal flavor[0][:vcpus], 1
+  end
+
   def test_create_flavor
     json_response = %{{
       "flavor": {
