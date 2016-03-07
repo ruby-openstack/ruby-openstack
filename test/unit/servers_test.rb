@@ -74,7 +74,7 @@ class ServersTest < Test::Unit::TestCase
   end
 
   def test_list_servers_detail
-    json_response = list_servers_detail_json("SHUTOFF")
+    json_response = list_servers_detail_json_response("SHUTOFF")
 
     response = mock()
     response.stubs(:code => "200", :body => json_response)
@@ -82,6 +82,7 @@ class ServersTest < Test::Unit::TestCase
 
     servers = @comp.list_servers_detail(status: "SHUTOFF")
     assert_equal "SHUTOFF", servers[0][:status]
+    assert_equal "new-server-test", servers[0][:name]
   end
 
   def test_get_server
@@ -247,7 +248,7 @@ private
     @comp.list_servers(name: "new-server-test")
   end
 
-  def list_servers_detail_json(status= "ACTIVE")
+  def list_servers_detail_json_response(status= "ACTIVE")
     %{{
       "servers": [
           {

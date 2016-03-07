@@ -66,7 +66,7 @@ class FlavorsTest < Test::Unit::TestCase
     response = mock()
     response.stubs(:code => "200", :body => json_response)
     @comp.connection.stubs(:csreq).returns(response)
-    flavor = @comp.list_flavors(tenant_id: "5a978754183d4765bf96aaf847e5d463", limit: 1)
+    flavor = @comp.list_flavors(limit: 1)
     assert_equal flavor[0][:id], '1'
     assert_equal flavor[0][:name], 'm1.tiny'
     assert_equal flavor[0][:ram], 512

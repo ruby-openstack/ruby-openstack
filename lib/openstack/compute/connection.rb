@@ -33,7 +33,8 @@ module Compute
 
     # Returns an array of hashes, one for each server that exists under this account.  The hash keys are :name and :id.
     #
-    # You can also provide :limit and :offset parameters to handle pagination.
+    # You can also provide :limit and :offset and :"changes-since" and :image and :flavor and :name and :status
+    # and :host and :limit and :marker parameters to handle pagination.
     # http://developer.openstack.org/api-ref-compute-v2.1.html
     #
     #   >> cs.list_servers
@@ -44,8 +45,7 @@ module Compute
     #       {:name=>"demo-aicache1", :id=>187853}]
     def list_servers(options = {})
       anti_cache_param="cacheid=#{Time.now.to_i}"
-      options = options.to_query
-      path = options.empty? ? "#{@connection.service_path}/servers?#{anti_cache_param}" : "#{@connection.service_path}/servers?#{options}&#{anti_cache_param}"
+      path = options.empty? ? "#{@connection.service_path}/servers?#{anti_cache_param}" : "#{@connection.service_path}/servers?#{options.to_query}&#{anti_cache_param}"
       response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       OpenStack.symbolize_keys(JSON.parse(response.body)["servers"])
@@ -56,7 +56,8 @@ module Compute
     # includes public and private IP addresses, status, hostID, and more.  All hash keys are symbols except for the metadata
     # hash, which are verbatim strings.
     #
-    # You can also provide :limit and :offset parameters to handle pagination.
+    # You can also provide :limit and :offset and :"changes-since" and :image and :flavor and :name and :status and :host
+    # and :limit and :marker parameters to handle pagination.
     # http://developer.openstack.org/api-ref-compute-v2.1.html
     #   >> cs.list_servers_detail
     #   => [{:name=>"MyServer", :addresses=>{:public=>["67.23.42.37"], :private=>["10.176.241.237"]}, :metadata=>{"MyData" => "Valid"}, :imageRef=>10, :progress=>100, :hostId=>"36143b12e9e48998c2aef79b50e144d2", :flavorRef=>1, :id=>110917, :status=>"ACTIVE"}]
@@ -65,8 +66,7 @@ module Compute
     #   => [{:status=>"ACTIVE", :imageRef=>10, :progress=>100, :metadata=>{}, :addresses=>{:public=>["x.x.x.x"], :private=>["x.x.x.x"]}, :name=>"demo-standingcloud-lts", :id=>168867, :flavorRef=>1, :hostId=>"xxxxxx"},
     #       {:status=>"ACTIVE", :imageRef=>8, :progress=>100, :metadata=>{}, :addresses=>{:public=>["x.x.x.x"], :private=>["x.x.x.x"]}, :name=>"demo-aicache1", :id=>187853, :flavorRef=>3, :hostId=>"xxxxxx"}]
     def list_servers_detail(options = {})
-      options = options.to_query
-      path = options.empty? ? "#{@connection.service_path}/servers/detail" : "#{@connection.service_path}/servers/detail?#{options}"
+      path = options.empty? ? "#{@connection.service_path}/servers/detail" : "#{@connection.service_path}/servers/detail?#{options.to_query}"
       response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       json_server_list = JSON.parse(response.body)["servers"]
@@ -131,7 +131,8 @@ module Compute
     # Returns an array of hashes listing available server images that you have access too,
     # including stock OpenStack Compute images and any that you have created.  The "id" key
     # in the hash can be used where imageRef is required. You can also provide :limit and
-    # :offset parameters to handle pagination.
+    # :offset and :"changes-since" and :server and :name and :status :minDisk and :minRam
+    # and :type and :limit and :marker parameters to handle pagination.
     #
     #   >> cs.list_images
     #   => [{:name=>"CentOS 5.2", :id=>2, :updated=>"2009-07-20T09:16:57-05:00", :status=>"ACTIVE", :created=>"2009-07-20T09:16:57-05:00"},
@@ -142,8 +143,7 @@ module Compute
     #       {:status=>"ACTIVE", :name=>"CentOS 5.3", :updated=>"2009-08-26T14:59:52-05:00", :id=>7},
     #       {:status=>"ACTIVE", :name=>"CentOS 5.4", :updated=>"2009-12-16T01:02:17-06:00", :id=>187811}]
     def list_images(options = {})
-      options = options.to_query
-      path = options.empty? ? "#{@connection.service_path}/images/detail" : "#{@connection.service_path}/images/detail?#{options}"
+      path = options.empty? ? "#{@connection.service_path}/images/detail" : "#{@connection.service_path}/images/detail?#{options.to_query}"
       response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       OpenStack.symbolize_keys(JSON.parse(response.body)['images'])
@@ -173,8 +173,7 @@ module Compute
     #       {:ram=>2048, :disk=>80, :name=>"2GB server", :id=>4},
     #       {:ram=>4096, :disk=>160, :name=>"4GB server", :id=>5}]
     def list_flavors(options = {})
-      options = options.to_query
-      path = options.empty? ? "#{@connection.service_path}/flavors/detail" : "#{@connection.service_path}/flavors/detail?#{options}"
+      path = options.empty? ? "#{@connection.service_path}/flavors/detail" : "#{@connection.service_path}/flavors/detail?#{options.to_query}"
       response = @connection.csreq("GET",@connection.service_host,path,@connection.service_port,@connection.service_scheme)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       OpenStack.symbolize_keys(JSON.parse(response.body)['flavors'])
