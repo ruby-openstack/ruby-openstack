@@ -275,7 +275,9 @@ module OpenStack
     # If it fails, it raises an exception.
 
     def self.init(conn)
-      if conn.auth_path =~ /.*v2.0\/?$/
+      if conn.auth_path =~ /.*v3\/?$/
+        AuthV30.new(conn)
+      elsif conn.auth_path =~ /.*v2.0\/?$/
         AuthV20.new(conn)
       else
         AuthV10.new(conn)
@@ -284,6 +286,59 @@ module OpenStack
   end
 
   private
+
+  class AuthV10
+    def initialize(connection)
+      tries = connection.retries
+      time = 3
+
+      hdrhash = { "X-Auth-User" => connection.authuser, "X-Auth-Key" => connection.authkey }
+      begin
+        server = Net::HTTP::Proxy(connection.proxy_host, connection.proxy_port).new(connection.auth_host, connection.auth_port)
+        if connection.auth_scheme == "https"
+          server.use_ssl = true
+          server.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+          # use the ca_cert if were given one, and make sure to verify!
+          if !connection.ca_cert.nil?
+            server.ca_file = connection.ca_cert
+            server.verify_mode = OpenSSL::SSL::VERIFY_PEER
+          end
+
+          # explicitly set the SSL version to use
+          server.ssl_version = connection.ssl_version if !connection.ssl_version.nil?
+        end
+        server.start
+      rescue
+        puts "Can't connect to the server: #{tries} tries  to reconnect" if connection.is_debug
+        sleep time += 1
+        retry unless (tries -= 1) <= 0
+        raise OpenStack::Exception::Connection, "Unable to connect to #{server}"
+      end
+
+      response = server.get(connection.auth_path, hdrhash)
+
+      if (response.code =~ /^20./)
+        connection.authtoken = response["x-auth-token"]
+        case connection.service_type
+        when "compute"
+          uri = URI.parse(response["x-server-management-url"])
+        when "object-store"
+          uri = URI.parse(response["x-storage-url"])
+        end
+        raise OpenStack::Exception::Authentication, "Unexpected Response from  #{connection.auth_host} - couldn't get service URLs: \"x-server-management-url\" is: #{response["x-server-management-url"]} and \"x-storage-url\" is: #{response["x-storage-url"]}"  if (uri.host.nil? || uri.host=="")
+        connection.service_host = uri.host
+        connection.service_path = uri.path
+        connection.service_port = uri.port
+        connection.service_scheme = uri.scheme
+        connection.authok = true
+      else
+        connection.authok = false
+        raise OpenStack::Exception::Authentication, "Authentication failed with response code #{response.code}"
+      end
+      server.finish
+    end
+  end
 
   class AuthV20
     attr_reader :uri
@@ -394,56 +449,109 @@ module OpenStack
     end
   end
 
-  class AuthV10
+  # Implement the Identity Version 3.x API
+  # http://developer.openstack.org/api-ref-identity-v3.html
+  # This is still experimental, so don't use in production.
+  class AuthV30
+    attr_reader :uri, :version
+    # TODO: Parse the version for an endpoint
+
     def initialize(connection)
       tries = connection.retries
       time = 3
 
-      hdrhash = { "X-Auth-User" => connection.authuser, "X-Auth-Key" => connection.authkey }
+      # TODO: Refactor this for all auth classes
       begin
         server = Net::HTTP::Proxy(connection.proxy_host, connection.proxy_port).new(connection.auth_host, connection.auth_port)
         if connection.auth_scheme == "https"
           server.use_ssl = true
           server.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
-          # use the ca_cert if were given one, and make sure to verify!
-          if !connection.ca_cert.nil?
+          # use the ca_cert if were given one, and make sure we verify!
+          unless connection.ca_cert.nil?
             server.ca_file = connection.ca_cert
             server.verify_mode = OpenSSL::SSL::VERIFY_PEER
           end
 
           # explicitly set the SSL version to use
-          server.ssl_version = connection.ssl_version if !connection.ssl_version.nil?
+          server.ssl_version = connection.ssl_version unless connection.ssl_version.nil?
         end
         server.start
       rescue
-        puts "Can't connect to the server: #{tries} tries  to reconnect" if connection.is_debug
+        puts "Can't connect to the server: #{tries} tries to reconnect" if connection.is_debug
         sleep time += 1
         retry unless (tries -= 1) <= 0
         raise OpenStack::Exception::Connection, "Unable to connect to #{server}"
       end
 
-      response = server.get(connection.auth_path, hdrhash)
+      @uri = ''
 
-      if (response.code =~ /^20./)
-        connection.authtoken = response["x-auth-token"]
-        case connection.service_type
-        when "compute"
-          uri = URI.parse(response["x-server-management-url"])
-        when "object-store"
-          uri = URI.parse(response["x-storage-url"])
+      # TODO: Add optional scope?
+      case connection.auth_method.to_sym
+      when :password
+        auth_data = JSON.generate({'auth' => {
+                                     'identity' => {
+                                       'methods' => ['password'],
+                                       'password' => {
+                                         'user' => {
+                                           'id' => connection.authuser,
+                                           'password' => connection.authkey}}}}})
+      when :token
+        auth_data = JSON.generate({'auth' => {
+                                     'identity' => {
+                                       'methods' => ['token'],
+                                       'token' => {
+                                         'id' => connection.authkey}}}})
+      else
+        raise Exception::InvalidArgument, "Unrecognized auth method #{connection.auth_method}."
+      end
+
+      response = server.post(connection.auth_path.chomp('/') + '/auth/tokens',
+                             auth_data,
+                             {'Content-Type' => 'application/json'})
+
+
+      if response.code =~ /^20./
+        connection.authtoken = response['X-Subject-Token']
+
+        # Check if the used service is available
+        all_services = server.get(connection.auth_path.chomp('/') + '/services',
+                                  {'X-Auth-Token' => connection.authtoken,
+                                   'Content-Type' => 'application/json'})
+
+        # Find the right service
+        service = nil
+        JSON.parse(all_services.body)['services'].each do |s|
+          next unless s['enabled']
+          service = s if s['type'] == connection.service_type
         end
-        raise OpenStack::Exception::Authentication, "Unexpected Response from  #{connection.auth_host} - couldn't get service URLs: \"x-server-management-url\" is: #{response["x-server-management-url"]} and \"x-storage-url\" is: #{response["x-storage-url"]}"  if (uri.host.nil? || uri.host=="")
-        connection.service_host = uri.host
-        connection.service_path = uri.path
-        connection.service_port = uri.port
-        connection.service_scheme = uri.scheme
+        raise OpenStack::Exception::NotImplemented.new("The requested service \"#{connection.service_type}\" is not present.") if service.nil?
+        
+        # Fetch the URI for the right service and region
+        response = server.get(connection.auth_path.chomp('/') + '/endpoints',
+                              {'X-Auth-Token' => connection.authtoken,
+                               'Content-Type' => 'application/json'})
+        endpoints = JSON.parse(response.body)['endpoints']
+        endpoints.each do |endpoint|
+          next unless endpoint['enabled']
+          region = connection.region || endpoint['region']
+          if endpoint['service_id'] == service['id'] &&
+             endpoint['region'] == region
+            @uri = URI.parse(endpoint['url'])
+          end
+        end
+
+        raise OpenStack::Exception::Authentication, "No API endpoint for region #{connection.region}" if @uri == ''
+
+        connection.service_host = @uri.host
+        connection.service_path = @uri.path.gsub('$(tenant_id)s', connection.authtenant)
+        connection.service_port = @uri.port
+        connection.service_scheme = @uri.scheme
         connection.authok = true
       else
-        connection.authok = false
+        connection.authtoken = false
         raise OpenStack::Exception::Authentication, "Authentication failed with response code #{response.code}"
       end
-      server.finish
     end
   end
 
