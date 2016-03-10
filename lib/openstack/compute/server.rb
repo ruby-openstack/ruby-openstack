@@ -109,7 +109,7 @@ module Compute
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       true
     end
-    
+
     # Sends an API request to start (resume) the server.
     #
     # Returns true if the API call succeeds.
@@ -150,6 +150,19 @@ module Compute
     #   => true
     def delete!
       response = @compute.connection.csreq("DELETE",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}",@svrmgmtport,@svrmgmtscheme)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
+    # Force-deletes a server before deferred cleanup.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.force_delete!
+    #   => true
+    def force_delete!
+      data = JSON.generate(:forceDelete => nil)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       true
     end

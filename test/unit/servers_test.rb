@@ -98,6 +98,14 @@ class ServersTest < Test::Unit::TestCase
     assert_equal "10.176.42.16", server.addresses[:private][0].address
   end
 
+  def test_force_delete!
+    response = mock()
+    response.stubs(:code => "202")
+    @comp.connection.stubs(:csreq).returns(response)
+    result = get_test_server.force_delete!
+    assert_equal result, true
+  end
+
   def test_rebuild_server
     json_response = %{{
     "server": {
@@ -192,7 +200,16 @@ class ServersTest < Test::Unit::TestCase
 
 private
   def get_test_server
-    json_response = %{{
+    json_response = get_test_server_json_response
+
+    response = mock()
+    response.stubs(:code => "200", :body => json_response)
+    @comp.connection.stubs(:csreq).returns(response)
+    return @comp.server(1234)
+  end
+
+  def get_test_server_json_response
+    %{{
       "server" : {
           "id" : 1234,
           "name" : "sample-server",
@@ -216,11 +233,6 @@ private
           }
       }
     }}
-
-    response = mock()
-    response.stubs(:code => "200", :body => json_response)
-    @comp.connection.stubs(:csreq).returns(response)
-    return @comp.server(1234)
   end
 
   def list_servers
