@@ -30,18 +30,19 @@ module Volume
       response = @connection.csreq("POST",@connection.service_host,"#{@connection.service_path}/#{@volume_path}",@connection.service_port,@connection.service_scheme,{'content-type' => 'application/json'},data)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       volume_info = JSON.parse(response.body)["volume"]
-      volume = OpenStack::Volume::Volume.new(volume_info)
+      OpenStack::Volume::Volume.new(volume_info)
     end
 
     #no options documented in API at Nov 2012
     #(e.g. like limit/marker as used in Nova for servers)
-    def list_volumes
-      response = @connection.req("GET", "/#{@volume_path}")
+    #You can also provide :limit and :offset parameters to handle pagenation.
+    def list_volumes(options= {})
+      path = options.empty? ? "/#{@volume_path}" : "/#{@volume_path}?#{options.to_query}"
+      response = @connection.req("GET", path)
       volumes_hash = JSON.parse(response.body)["volumes"]
       volumes_hash.inject([]){|res, current| res << OpenStack::Volume::Volume.new(current); res}
     end
     alias :volumes :list_volumes
-
 
     def get_volume(vol_id)
       response = @connection.req("GET", "/#{@volume_path}/#{vol_id}")
@@ -50,8 +51,16 @@ module Volume
     end
     alias :volume :get_volume
 
+    # You can also provide :limit and :offset parameters to handle pagenation.
+    def list_volumes_detail(options= {})
+      path = options.empty? ? "/#{@volume_path}/detail" : "/#{@volume_path}/detail?#{options.to_query}"
+      response = @connection.req("GET", path)
+      JSON.parse(response.body)["volumes"]
+    end
+    alias :volumes_detail :list_volumes_detail
+
     def delete_volume(vol_id)
-      response = @connection.req("DELETE", "/#{@volume_path}/#{vol_id}")
+      @connection.req("DELETE", "/#{@volume_path}/#{vol_id}")
       true
     end
 
