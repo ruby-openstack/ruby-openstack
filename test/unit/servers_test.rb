@@ -106,6 +106,22 @@ class ServersTest < Test::Unit::TestCase
     assert_equal result, true
   end
 
+  def test_lock
+    response = mock()
+    response.stubs(:code => "202")
+    @comp.connection.stubs(:csreq).returns(response)
+    result = get_test_server.lock
+    assert_equal result, true
+  end
+
+  def test_unlock
+    response = mock()
+    response.stubs(:code => "202")
+    @comp.connection.stubs(:csreq).returns(response)
+    result = get_test_server.unlock
+    assert_equal result, true
+  end
+
   def test_rebuild_server
     json_response = %{{
     "server": {

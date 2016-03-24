@@ -362,6 +362,32 @@ module Compute
       true
     end
 
+    # Sends an API request to lock this server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.lock
+    #   => true
+    def lock
+      data = JSON.generate(:lock => nil)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
+    # Sends an API request to unlock this server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.unlock
+    #   => true
+    def unlock
+      data = JSON.generate(:unlock => nil)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
   end
 end
 end
