@@ -46,6 +46,7 @@ Gem::Specification.new do |s|
     "lib/openstack/volume/connection.rb",
     "lib/openstack/volume/snapshot.rb",
     "lib/openstack/volume/volume.rb",
+    "lib/openstack/core_ext/to_query.rb",
     "test/authentication_test.rb",
     "test/connection_test.rb",
     "test/exception_test.rb",
