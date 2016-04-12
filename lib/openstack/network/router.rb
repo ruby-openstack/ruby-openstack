@@ -14,7 +14,7 @@ module Network
     def initialize(router_info={})
       @name = router_info['name']
       @status = router_info['status']
-      @external_geteway_info = router_info['external_gateway_info']
+      @external_gateway_info = router_info['external_gateway_info']
       @admin_state_up = router_info['admin_state_up']
       @tenant_id = router_info['tenant_id']
       @id = router_info['id']
