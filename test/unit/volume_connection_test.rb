@@ -94,28 +94,17 @@ class VolumeConnectionTest < Test::Unit::TestCase
     json_response = %{{
       "volumes": [
         {
-            "id": "521752a6-acf6-4b2d-bc7a-119f9148cd8c",
-            "display_name": "vol-001",
-            "display_description": "Another volume.",
-            "status": "active",
-            "size": 30,
-            "volume_type": "289da7f8-6440-407c-9fb4-7db01ec49164",
-            "metadata": {
-                "contents": "junk"
-            },
-            "availability_zone": "us-east1",
-            "snapshot_id": null,
-            "attachments": [
-                {
-                    "attachment_id": "03987cd1-0ad5-40d1-9b2a-7cc48295d4fa",
-                    "id": "47e9ecc5-4045-4ee3-9a4b-d859d546a0cf",
-                    "volume_id": "6c80f8ac-e3e2-480c-8e6e-f1db92fe4bfe",
-                    "server_id": "d1c4788b-9435-42e2-9b81-29f3be1cd01f",
-                    "host_name": "mitaka",
-                    "device": "/"
-                }
-            ],
-            "created_at": "2012-02-14T20:53:07Z"
+          "id": "45baf976-c20a-4894-a7c3-c94b7376bf55",
+          "display_name": "vol-001",
+          "display_description": null,
+          "size": 10,
+          "volume_type": null,
+          "metadata": null,
+          "availability_zone": null,
+          "snapshot_id": null,
+          "attachments": [],
+          "created_at": "2016-04-12T11:31:46.000000",
+          "status": "in-use"
         }
       ]
     }}
@@ -125,10 +114,18 @@ class VolumeConnectionTest < Test::Unit::TestCase
     @cinder.connection.stubs(:req).returns(response)
 
     volumes = @cinder.list_volumes(limit: 1)
-    assert_equal volumes.size , 1
-    assert_equal volumes[0].id, '521752a6-acf6-4b2d-bc7a-119f9148cd8c'
+    assert_equal volumes[0].size , 10
+    assert_equal volumes[0].id, '45baf976-c20a-4894-a7c3-c94b7376bf55'
     assert_equal volumes[0].display_name, 'vol-001'
-    assert_equal volumes[0].status, 'active'
+    assert_equal volumes[0].display_description, nil
+    assert_equal volumes[0].size, 10
+    assert_equal volumes[0].volume_type, nil
+    assert_equal volumes[0].metadata, nil
+    assert_equal volumes[0].availability_zone, nil
+    assert_equal volumes[0].snapshot_id, nil
+    assert_equal volumes[0].attachments, []
+    assert_equal volumes[0].created_at, "2016-04-12T11:31:46.000000"
+    assert_equal volumes[0].status, "in-use"
   end
 
   def test_list_volumes_detail

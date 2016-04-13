@@ -154,8 +154,11 @@ module Compute
       true
     end
 
-    # Force-deletes a server before deferred cleanup.
+    # Policy defaults enable only users with the administrative role or
+    # the owner of the server to perform this operation.
+    # Cloud providers can change these permissions through the policy.json file.
     #
+    # Force-deletes a server before deferred cleanup.
     # Returns true if the API call succeeds.
     #
     #   >> server.force_delete!
@@ -362,6 +365,10 @@ module Compute
       true
     end
 
+    # Policy defaults enable only users with the administrative role or
+    # the owner of the server to perform this operation.
+    # Cloud providers can change these permissions through the policy.json file.
+    #
     # Sends an API request to lock this server.
     #
     # Returns true if the API call succeeds.
@@ -375,6 +382,10 @@ module Compute
       true
     end
 
+    # Policy defaults enable only users with the administrative role or
+    # the owner of the server to perform this operation.
+    # Cloud providers can change these permissions through the policy.json file.
+    #
     # Sends an API request to unlock this server.
     #
     # Returns true if the API call succeeds.
