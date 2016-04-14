@@ -95,16 +95,17 @@ class VolumeConnectionTest < Test::Unit::TestCase
       "volumes": [
         {
           "id": "45baf976-c20a-4894-a7c3-c94b7376bf55",
-          "display_name": "vol-001",
-          "display_description": null,
-          "size": 10,
-          "volume_type": null,
-          "metadata": null,
-          "availability_zone": null,
-          "snapshot_id": null,
-          "attachments": [],
-          "created_at": "2016-04-12T11:31:46.000000",
-          "status": "in-use"
+          "links": [
+            {
+              "href": "http://localhost:8776/v2/0c2eba2c5af04d3f9e9d0d410b371fde/volumes/45baf976-c20a-4894-a7c3-c94b7376bf55",
+              "rel": "self"
+            },
+            {
+              "href": "http://localhost:8776/0c2eba2c5af04d3f9e9d0d410b371fde/volumes/45baf976-c20a-4894-a7c3-c94b7376bf55",
+              "rel": "bookmark"
+            }
+          ],
+          "name": "vol-001"
         }
       ]
     }}
@@ -114,71 +115,61 @@ class VolumeConnectionTest < Test::Unit::TestCase
     @cinder.connection.stubs(:req).returns(response)
 
     volumes = @cinder.list_volumes(limit: 1)
-    assert_equal volumes[0].size , 10
     assert_equal volumes[0].id, '45baf976-c20a-4894-a7c3-c94b7376bf55'
-    assert_equal volumes[0].display_name, 'vol-001'
-    assert_equal volumes[0].display_description, nil
-    assert_equal volumes[0].size, 10
-    assert_equal volumes[0].volume_type, nil
-    assert_equal volumes[0].metadata, nil
-    assert_equal volumes[0].availability_zone, nil
-    assert_equal volumes[0].snapshot_id, nil
-    assert_equal volumes[0].attachments, []
-    assert_equal volumes[0].created_at, "2016-04-12T11:31:46.000000"
-    assert_equal volumes[0].status, "in-use"
+    assert_equal volumes.size , 1
   end
 
   def test_list_volumes_detail
     json_response = %{{
       "volumes": [
         {
-            "migration_status": null,
-            "attachments": [
-                {
-                    "server_id": "f4fda93b-06e0-4743-8117-bc8bcecd651b",
-                    "attachment_id": "3b4db356-253d-4fab-bfa0-e3626c0b8405",
-                    "host_name": null,
-                    "volume_id": "6edbc2f4-1507-44f8-ac0d-eed1d2608d38",
-                    "device": "/dev/vdb",
-                    "id": "6edbc2f4-1507-44f8-ac0d-eed1d2608d38"
-                }
-            ],
-            "links": [
-                {
-                    "href": "http://23.253.248.171:8776/v2/bab7d5c60cd041a0a36f7c4b6e1dd978/volumes/6edbc2f4-1507-44f8-ac0d-eed1d2608d38",
-                    "rel": "self"
-                },
-                {
-                    "href": "http://23.253.248.171:8776/bab7d5c60cd041a0a36f7c4b6e1dd978/volumes/6edbc2f4-1507-44f8-ac0d-eed1d2608d38",
-                    "rel": "bookmark"
-                }
-            ],
-            "availability_zone": "nova",
-            "os-vol-host-attr:host": "difleming@lvmdriver-1#lvmdriver-1",
-            "encrypted": false,
-            "os-volume-replication:extended_status": null,
-            "replication_status": "disabled",
-            "snapshot_id": null,
-            "id": "6edbc2f4-1507-44f8-ac0d-eed1d2608d38",
-            "size": 2,
-            "user_id": "32779452fcd34ae1a53a797ac8a1e064",
-            "os-vol-tenant-attr:tenant_id": "bab7d5c60cd041a0a36f7c4b6e1dd978",
-            "os-vol-mig-status-attr:migstat": null,
-            "metadata": {
-                "readonly": "False",
-                "attached_mode": "rw"
+          "migration_status": null,
+          "attachments": [
+            {
+              "server_id": "f4fda93b-06e0-4743-8117-bc8bcecd651b",
+              "attachment_id": "3b4db356-253d-4fab-bfa0-e3626c0b8405",
+              "host_name": null,
+              "volume_id": "6edbc2f4-1507-44f8-ac0d-eed1d2608d38",
+              "device": "/dev/vdb",
+              "id": "6edbc2f4-1507-44f8-ac0d-eed1d2608d38"
+            }
+          ],
+          "links": [
+            {
+              "href": "http://23.253.248.171:8776/v2/bab7d5c60cd041a0a36f7c4b6e1dd978/volumes/6edbc2f4-1507-44f8-ac0d-eed1d2608d38",
+              "rel": "self"
             },
-            "status": "in-use",
-            "description": null,
-            "multiattach": true,
-            "os-volume-replication:driver_data": null,
-            "source_volid": null,
-            "consistencygroup_id": null,
-            "os-vol-mig-status-attr:name_id": null,
-            "name": "test-volume-attachments",
-            "bootable": "false",
-            "created_at": "2015-11-29T03:01:44.000000",
-            "volume_type": "lvmdriver-1"
+            {
+              "href": "http://23.253.248.171:8776/bab7d5c60cd041a0a36f7c4b6e1dd978/volumes/6edbc2f4-1507-44f8-ac0d-eed1d2608d38",
+              "rel": "bookmark"
+            }
+          ],
+          "availability_zone": "nova",
+          "os-vol-host-attr:host": "difleming@lvmdriver-1#lvmdriver-1",
+          "encrypted": false,
+          "os-volume-replication:extended_status": null,
+          "replication_status": "disabled",
+          "snapshot_id": null,
+          "id": "6edbc2f4-1507-44f8-ac0d-eed1d2608d38",
+          "size": 2,
+          "user_id": "32779452fcd34ae1a53a797ac8a1e064",
+          "os-vol-tenant-attr:tenant_id": "bab7d5c60cd041a0a36f7c4b6e1dd978",
+          "os-vol-mig-status-attr:migstat": null,
+          "metadata": {
+            "readonly": "False",
+            "attached_mode": "rw"
+          },
+          "status": "in-use",
+          "description": null,
+          "multiattach": true,
+          "os-volume-replication:driver_data": null,
+          "source_volid": null,
+          "consistencygroup_id": null,
+          "os-vol-mig-status-attr:name_id": null,
+          "name": "test-volume-attachments",
+          "bootable": "false",
+          "created_at": "2015-11-29T03:01:44.000000",
+          "volume_type": "lvmdriver-1"
         }
       ]
     }}

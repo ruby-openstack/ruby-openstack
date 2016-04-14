@@ -35,7 +35,7 @@ module Volume
 
     #no options documented in API at Nov 2012
     #(e.g. like limit/marker as used in Nova for servers)
-    #You can also provide :limit and :offset parameters to handle pagenation.
+    #You can also provide :limit and :offset :display_name parameters to handle pagenation.
     def list_volumes(options= {})
       path = options.empty? ? "/#{@volume_path}" : "/#{@volume_path}?#{options.to_query}"
       response = @connection.req("GET", path)
@@ -51,7 +51,7 @@ module Volume
     end
     alias :volume :get_volume
 
-    # You can also provide :limit and :offset parameters to handle pagenation.
+    # You can also provide :limit and :offset :display_name and :status parameters to handle pagenation.
     def list_volumes_detail(options= {})
       path = options.empty? ? "/#{@volume_path}/detail" : "/#{@volume_path}/detail?#{options.to_query}"
       response = @connection.req("GET", path)
