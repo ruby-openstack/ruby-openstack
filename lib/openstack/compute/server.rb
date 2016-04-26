@@ -19,6 +19,7 @@ module Compute
     attr_reader   :key_name
     attr_reader   :created
     attr_reader   :security_groups
+    attr_reader   :availability_zone
 
     # This class is the representation of a single Server object.  The constructor finds the server identified by the specified
     # ID number, accesses the API via the populate method to get information about that server, and returns the object.
@@ -67,6 +68,7 @@ module Compute
       @key_name = data["key_name"] # if provider uses the keys API extension for accessing servers
       @created = data["created"]
       @security_groups = (data["security_groups"] || []).inject([]){|res, c| res << c["id"]  ; res}
+      @availability_zone = data["OS-EXT-AZ:availability_zone"]
       true
     end
     alias :refresh :populate
