@@ -1,7 +1,6 @@
-require File.dirname(__FILE__) + '/test_helper'
+require File.dirname(__FILE__) + '/../test_helper'
 
 class ExceptionTest < Test::Unit::TestCase
-
   def test_400_cloud_servers_fault
     response = mock()
     response.stubs(:code => "400", :body => "{\"ComputeFault\":{\"message\":\"422 Unprocessable Entity: We could not process your request at this time. We have been notified and are looking into the issue.  [E03]\",\"details\":\"com.rackspace.cloud.service.servers.OpenStack::ComputeFault: Fault occured\",\"code\":400}}" )
@@ -45,5 +44,4 @@ class ExceptionTest < Test::Unit::TestCase
     assert_not_nil(exception.response_body)
     assert_equal(body, exception.response_body)
   end
-
 end

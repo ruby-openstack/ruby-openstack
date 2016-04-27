@@ -22,11 +22,14 @@ class Connection
     attr_reader   :service_type
     attr_reader   :proxy_host
     attr_reader   :proxy_port
+    attr_reader   :ca_cert
+    attr_reader   :ssl_version
     attr_reader   :region
     attr_reader   :regions_list #e.g. os.connection.regions_list == {"region-a.geo-1" => [ {:service=>"object-store", :versionId=>"1.0"}, {:service=>"identity", :versionId=>"2.0"}], "region-b.geo-1"=>[{:service=>"identity", :versionId=>"2.0"}] }
 
     attr_reader   :http
     attr_reader   :is_debug
+    attr_reader   :endpoint_type
 
     # Creates and returns a new Connection object, depending on the service_type
     # passed in the options:
@@ -52,6 +55,9 @@ class Connection
     #   :retry_auth - Whether to retry if your auth token expires (defaults to true)
     #   :proxy_host - If you need to connect through a proxy, supply the hostname here
     #   :proxy_port - If you need to connect through a proxy, supply the port here
+    #   :ca_cert - path to a CA chain in PEM format
+    #   :ssl_version - explicitly set an version (:SSLv3 etc, see  OpenSSL::SSL::SSLContext::METHODS)
+    #   :is_debug - Only for development purpose for debug output
     #
     # The options hash is used to create a new OpenStack::Connection object
     # (private constructor) and this is passed to the constructor of OpenStack::Compute::Connection
@@ -72,6 +78,8 @@ class Connection
           OpenStack::Image::Connection.new(connection)
         when "network"
           OpenStack::Network::Connection.new(connection)
+        when "identity"
+          OpenStack::Identity::Connection.new(connection)
        else
           raise Exception::InvalidArgument, "Invalid :service_type parameter: #{@service_type}"
       end
@@ -105,9 +113,12 @@ class Connection
       @retry_auth = options[:retry_auth]
       @proxy_host = options[:proxy_host]
       @proxy_port = options[:proxy_port]
+      @ca_cert = options[:ca_cert]
+      @ssl_version = options[:ssl_version]
       @authok = false
       @http = {}
       @quantum_version = 'v2.0' if @service_type == 'network'
+      @endpoint_type = options[:endpoint_type] || "publicURL"
     end
 
     #specialised from of csreq for PUT object... uses body_stream if possible
@@ -232,6 +243,15 @@ class Connection
           if scheme == "https"
             @http[server].use_ssl = true
             @http[server].verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+            # use the ca_cert if were given one, and make sure we verify!
+            if ! @ca_cert.nil?
+              @http[server].ca_file = @ca_cert
+              @http[server].verify_mode = OpenSSL::SSL::VERIFY_PEER
+            end
+
+            # explicitly set the SSL version to use
+            @http[server].ssl_version= @ssl_version if ! @ssl_version.nil?
           end
           @http[server].start
         rescue
@@ -280,6 +300,15 @@ class AuthV20
       if connection.auth_scheme == "https"
         server.use_ssl = true
         server.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+        # use the ca_cert if were given one, and make sure we verify!
+        if !connection.ca_cert.nil?
+          server.ca_file = connection.ca_cert
+          server.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        end
+
+        # explicitly set the SSL version to use
+        server.ssl_version = connection.ssl_version if !connection.ssl_version.nil?
       end
       server.start
     rescue
@@ -324,23 +353,23 @@ class AuthV20
           if connection.region
             endpoints.each do |ep|
               if ep["region"] and ep["region"].upcase == connection.region.upcase
-                @uri = URI.parse(ep["publicURL"])
+                @uri = URI.parse(ep[connection.endpoint_type])
               end
             end
           else
-            @uri = URI.parse(endpoints[0]["publicURL"])
+            @uri = URI.parse(endpoints[0][connection.endpoint_type])
           end
           if @uri == ""
             raise OpenStack::Exception::Authentication, "No API endpoint for region #{connection.region}"
           else
             if @version #already got one version of endpoints
-              current_version = get_version_from_response(service)
+              current_version = get_version_from_response(service,connection.endpoint_type)
               if @version.to_f > current_version.to_f
                 next
               end
             end
             #grab version to check next time round for multi-version deployments
-            @version = get_version_from_response(service)
+            @version = get_version_from_response(service,connection.endpoint_type)
             connection.service_host = @uri.host
             connection.service_path = @uri.path
             connection.service_port = @uri.port
@@ -356,8 +385,8 @@ class AuthV20
     server.finish if server.started?
   end
 
-  def get_version_from_response(service)
-    service["endpoints"].first["versionId"] || parse_version_from_endpoint(service["endpoints"].first["publicURL"])
+  def get_version_from_response(service,endpoint_type)
+    service["endpoints"].first["versionId"] || parse_version_from_endpoint(service["endpoints"].first[endpoint_type])
   end
 
   #IN  --> https://az-2.region-a.geo-1.compute.hpcloudsvc.com/v1.1/46871569847393
@@ -381,6 +410,15 @@ class AuthV10
       if connection.auth_scheme == "https"
         server.use_ssl = true
         server.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+        # use the ca_cert if were given one, and make sure to verify!
+        if !connection.ca_cert.nil?
+          server.ca_file = connection.ca_cert
+          server.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        end
+
+        # explicitly set the SSL version to use
+        server.ssl_version = connection.ssl_version if !connection.ssl_version.nil?
       end
       server.start
     rescue

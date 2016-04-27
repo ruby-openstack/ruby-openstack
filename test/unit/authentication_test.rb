@@ -1,14 +1,14 @@
-require File.dirname(__FILE__) + '/test_helper'
+require File.dirname(__FILE__) + '/../test_helper'
 
 class AuthenticationTest < Test::Unit::TestCase
-
   def test_good_authentication
     response = {'x-server-management-url' => 'http://server-manage.example.com/path', 'x-auth-token' => 'dummy_token'}
     response.stubs(:code).returns('204')
-    server = mock(:use_ssl= => true, :verify_mode= => true, :start => true, :finish => true)
+    server = mock(:ca_file= => true, :use_ssl= => true, :ssl_version= => true, :start => true, :finish => true)
+    server.expects(:verify_mode=).twice
     server.stubs(:get).returns(response)
     Net::HTTP.stubs(:new).returns(server)
-    connection = stub(:authuser => 'good_user',:authtenant => {:type=>"tenantName", :value=>'good_tenant'}, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v1.0", :service_type=>"compute", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo')
+    connection = stub(:ca_cert => '', :ssl_version => true, :ssl_version= => true, :authuser => 'good_user',:authtenant => {:type=>"tenantName", :value=>'good_tenant'}, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v1.0", :service_type=>"compute", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo', :retries => 3)
     result = OpenStack::Authentication.init(connection)
     assert_equal result.class, OpenStack::AuthV10
   end
@@ -16,10 +16,11 @@ class AuthenticationTest < Test::Unit::TestCase
   def test_bad_authentication
     response = mock()
     response.stubs(:code).returns('499')
-    server = mock(:use_ssl= => true, :verify_mode= => true, :start => true)
+    server = mock(:ca_file= => true, :use_ssl= => true, :ssl_version= => true, :start => true)
+    server.expects(:verify_mode=).twice
     server.stubs(:get).returns(response)
     Net::HTTP.stubs(:new).returns(server)
-    connection = stub(:authuser => 'bad_user', :authtenant => {:type=>"tenantName", :value=>'good_tenant'}, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v1.0", :authok= => true, :authtoken= => true, :proxy_host => nil, :proxy_port => nil, :api_path => '/foo')
+    connection = stub(:ca_cert => '', :ssl_version => true, :ssl_version= => true, :authuser => 'bad_user', :authtenant => {:type=>"tenantName", :value=>'good_tenant'}, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v1.0", :authok= => true, :authtoken= => true, :proxy_host => nil, :proxy_port => nil, :api_path => '/foo', :retries => 3)
     assert_raises(OpenStack::Exception::Authentication) do
       result = OpenStack::Authentication.init(connection)
     end
@@ -27,7 +28,7 @@ class AuthenticationTest < Test::Unit::TestCase
 
   def test_bad_hostname
     Net::HTTP.stubs(:new).raises(OpenStack::Exception::Connection)
-    connection = stub(:authuser => 'bad_user', :authtenant => {:type=>"tenantName", :value=>'good_tenant'}, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v1.0", :authok= => true, :authtoken= => true, :proxy_host => nil, :proxy_port => nil, :api_path => '/foo')
+    connection = stub(:ca_cert => '', :ssl_version => true, :ssl_version= => true, :authuser => 'bad_user', :authtenant => {:type=>"tenantName", :value=>'good_tenant'}, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v1.0", :authok= => true, :authtoken= => true, :proxy_host => nil, :proxy_port => nil, :api_path => '/foo', :retries => 3, :is_debug => false)
     assert_raises(OpenStack::Exception::Connection) do
       result = OpenStack::Authentication.init(connection)
     end
@@ -45,7 +46,7 @@ class AuthenticationTest < Test::Unit::TestCase
   private
 
   def v2_auth_connection_stub
-    stub(:authuser => 'good_user', :auth_method => "password",:authtenant => {:type=>"tenantName", :value=>'good_tenant'} , :regions_list => {"North"=> [{:service=>"compute", :versionId=>nil}, {:service=>"nova", :versionId=>nil}], "South"=>[{:service=>"compute", :versionId=>nil}, {:service=>"nova", :versionId=>nil}] }, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v2.0", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo', :service_type => "compute", :service_name => "cloudServers", :region => "South")
+    stub(:ca_cert => '', :ssl_version => true, :ssl_version= => true, :authuser => 'good_user', :auth_method => "password",:authtenant => {:type=>"tenantName", :value=>'good_tenant'} , :regions_list => {"North"=> [{:service=>"compute", :versionId=>nil}, {:service=>"nova", :versionId=>nil}], "South"=>[{:service=>"compute", :versionId=>nil}, {:service=>"nova", :versionId=>nil}] }, :authkey => 'bad_key', :auth_host => "a.b.c", :auth_port => "443", :auth_scheme => "https", :auth_path => "/v2.0", :authok= => true, :authtoken= => true, :service_host= => "", :service_path= => "", :service_path => "", :service_port= => "", :service_scheme= => "", :proxy_host => nil, :proxy_port => nil, :api_path => '/foo', :service_type => "compute", :service_name => "cloudServers", :region => "South", :retries => 3, :is_debug => nil, :endpoint_type => 'publicURL')
   end
 
   def get_test_auth_server
@@ -113,7 +114,8 @@ class AuthenticationTest < Test::Unit::TestCase
 
     response = {'x-server-management-url' => 'http://server-manage.example.com/path', 'x-auth-token' => 'dummy_token'}
     response.stubs(:code => "200", :body => json_response)
-    server = mock(:use_ssl= => true, :verify_mode= => true, :start => true, :finish => true)
+    server = mock(:ca_file= => true, :use_ssl= => true, :ssl_version= => true, :start => true, :finish => true)
+    server.expects(:verify_mode=).twice
     server.stubs(:post).returns(response)
     return server
   end

@@ -2,6 +2,8 @@
 
 Ruby OpenStack Compute, Object-Store, Block Storage and Network bindings for the OpenStack API. It supports Keystone Authentication (v1.0 and v2.0), Nova and Swift. See the [getting started](https://github.com/ruby-openstack/ruby-openstack/wiki) for documentation.
 
+[![Build Status](https://travis-ci.org/ruby-openstack/ruby-openstack.svg?branch=next)](https://travis-ci.org/ruby-openstack/ruby-openstack)
+
 ## Authors
 
 * Marios Andreou (marios@redhat.com)

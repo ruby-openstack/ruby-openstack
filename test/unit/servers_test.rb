@@ -1,7 +1,6 @@
-require File.dirname(__FILE__) + '/test_helper'
+require File.dirname(__FILE__) + '/../test_helper'
 
 class ServersTest < Test::Unit::TestCase
-
   include TestConnection
 
   def setup
@@ -9,7 +8,6 @@ class ServersTest < Test::Unit::TestCase
   end
 
   def test_list_servers
-
     json_response = %{{
       "servers" : [
         {
@@ -64,8 +62,30 @@ class ServersTest < Test::Unit::TestCase
     assert_equal "sample-server", servers[0][:name]
   end
 
-  def test_get_server
+  def test_filters_name_list_servers
+    servers = list_servers
+    assert_equal 1, servers.size
+    assert_equal "a291599e-6de2-41a6-88df-c443ddcef70d", servers[0][:id]
+    assert_equal "http://openstack.example.com/v2/openstack/servers/a291599e-6de2-41a6-88df-c443ddcef70d", servers[0][:links][0][:href]
+    assert_equal "self", servers[0][:links][0][:rel]
+    assert_equal "http://openstack.example.com/openstack/servers/a291599e-6de2-41a6-88df-c443ddcef70d", servers[0][:links][1][:href]
+    assert_equal "bookmark", servers[0][:links][1][:rel]
+    assert_equal "new-server-test", servers[0][:name]
+  end
 
+  def test_list_servers_detail
+    json_response = list_servers_detail_json_response("SHUTOFF")
+
+    response = mock()
+    response.stubs(:code => "200", :body => json_response)
+    @comp.connection.stubs(:csreq).returns(response)
+
+    servers = @comp.list_servers_detail(status: "SHUTOFF")
+    assert_equal "SHUTOFF", servers[0][:status]
+    assert_equal "new-server-test", servers[0][:name]
+  end
+
+  def test_get_server
     server=get_test_server
     assert_equal "sample-server", server.name
     assert_equal "2", server.image['id']
@@ -76,11 +96,9 @@ class ServersTest < Test::Unit::TestCase
     assert_equal "67.23.10.132", server.addresses[:public][0].address
     assert_equal "67.23.10.131", server.addresses[:public][1].address
     assert_equal "10.176.42.16", server.addresses[:private][0].address
-
   end
 
   def test_rebuild_server
-
     json_response = %{{
     "server": {
         "id": "52415800-8b69-11e0-9b19-734f565bc83b",
@@ -170,12 +188,10 @@ class ServersTest < Test::Unit::TestCase
 
     assert_not_nil server.adminPass
     assert_equal "newName", server.name
-
   end
 
 private
   def get_test_server
-
     json_response = %{{
       "server" : {
           "id" : 1234,
@@ -207,4 +223,108 @@ private
     return @comp.server(1234)
   end
 
+  def list_servers
+    json_response = %{{
+      "servers": [
+          {
+              "id": "a291599e-6de2-41a6-88df-c443ddcef70d",
+              "links": [
+                  {
+                      "href": "http://openstack.example.com/v2/openstack/servers/a291599e-6de2-41a6-88df-c443ddcef70d",
+                      "rel": "self"
+                  },
+                  {
+                      "href": "http://openstack.example.com/openstack/servers/a291599e-6de2-41a6-88df-c443ddcef70d",
+                      "rel": "bookmark"
+                  }
+              ],
+              "name": "new-server-test"
+          }
+      ]
+    }}
+    response = mock()
+    response.stubs(:code => "200", :body => json_response)
+    @comp.connection.stubs(:csreq).returns(response)
+    @comp.list_servers(name: "new-server-test")
+  end
+
+  def list_servers_detail_json_response(status= "ACTIVE")
+    %{{
+      "servers": [
+          {
+              "addresses": {
+                  "private": [
+                      {
+                          "addr": "192.168.0.3",
+                          "OS-EXT-IPS-MAC:mac_addr": "aa:bb:cc:dd:ee:ff",
+                          "OS-EXT-IPS:type": "fixed",
+                          "version": 4
+                      }
+                  ]
+              },
+              "created": "2013-09-23T13:53:12Z",
+              "flavor": {
+                  "id": "1",
+                  "links": [
+                      {
+                          "href": "http://openstack.example.com/openstack/flavors/1",
+                          "rel": "bookmark"
+                      }
+                  ]
+              },
+              "hostId": "f1e160ad2bf07084f3d3e0dfdd0795d80da18a60825322c15775c0dd",
+              "id": "9cbefc35-d372-40c5-88e2-9fda1b6ea12c",
+              "image": {
+                  "id": "70a599e0-31e7-49b7-b260-868f441e862b",
+                  "links": [
+                      {
+                          "href": "http://openstack.example.com/openstack/images/70a599e0-31e7-49b7-b260-868f441e862b",
+                          "rel": "bookmark"
+                      }
+                  ]
+              },
+              "key_name": null,
+              "links": [
+                  {
+                      "href": "http://openstack.example.com/v2/openstack/servers/9cbefc35-d372-40c5-88e2-9fda1b6ea12c",
+                      "rel": "self"
+                  },
+                  {
+                      "href": "http://openstack.example.com/openstack/servers/9cbefc35-d372-40c5-88e2-9fda1b6ea12c",
+                      "rel": "bookmark"
+                  }
+              ],
+              "metadata": {
+                  "My Server Name": "Apache1"
+              },
+              "name": "new-server-test",
+              "accessIPv4": "",
+              "accessIPv6": "",
+              "config_drive": "",
+              "OS-DCF:diskConfig": "AUTO",
+              "OS-EXT-AZ:availability_zone": "nova",
+              "OS-EXT-SRV-ATTR:host": "c3f14e9812ad496baf92ccfb3c61e15f",
+              "OS-EXT-SRV-ATTR:hypervisor_hostname": "fake-mini",
+              "OS-EXT-SRV-ATTR:instance_name": "instance-00000001",
+              "OS-EXT-STS:power_state": 1,
+              "OS-EXT-STS:task_state": null,
+              "OS-EXT-STS:vm_state": "active",
+              "os-extended-volumes:volumes_attached": [],
+              "OS-SRV-USG:launched_at": "2013-09-23T13:53:12.774549",
+              "OS-SRV-USG:terminated_at": null,
+              "progress": 0,
+              "security_groups": [
+                  {
+                      "name": "default"
+                  }
+              ],
+              "status": "#{status}",
+              "host_status": "UP",
+              "tenant_id": "openstack",
+              "updated": "2013-10-31T06:32:32Z",
+              "user_id": "fake"
+          }
+      ]
+    }}
+  end
 end

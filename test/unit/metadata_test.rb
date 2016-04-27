@@ -1,7 +1,6 @@
-require File.dirname(__FILE__) + '/test_helper'
+require File.dirname(__FILE__) + '/../test_helper'
 
 class MetadataTest < Test::Unit::TestCase
-
   include TestConnection
 
   def setup
@@ -206,5 +205,4 @@ class MetadataTest < Test::Unit::TestCase
         assert_equal v, data[k]
     end
   end
-
 end

@@ -1,7 +1,9 @@
 language: ruby
 rvm:
-  - 1.8.7
   - 1.9.3
+  - 2.1.8
+  - 2.2.4
+  - 2.3.0
 gemfile: server/Gemfile
 install:
   - bundle install
@@ -9,4 +11,4 @@ script:
   - bundle exec rake test
 notifications:
   email:
-    - mi@mifo.sk
+    - aaron.fischer@marbis.net
