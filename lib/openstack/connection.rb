@@ -166,7 +166,6 @@ class Connection
 
     # This method actually makes the HTTP REST calls out to the server
     def csreq(method,server,path,port,scheme,headers = {},data = nil,attempts = 0, &block) # :nodoc:
-
       tries = @retries
       time = 3
 
@@ -184,7 +183,7 @@ class Connection
         response = @http[server].request(request)
       end
       if @is_debug
-          puts "REQUEST: #{method} => #{path}"
+          puts "REQUEST: #{auth_method} => #{path}"
           puts data if data
           puts "RESPONSE: #{response.body}"
           puts '----------------------------------------'
