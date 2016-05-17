@@ -37,7 +37,6 @@ module OpenStack
   require 'openstack/identity/tenant'
   require 'openstack/identity/user'
   require 'openstack/core_ext/to_query'
-  require 'openstack/version'
 
   # Constants that set limits on server creation
   MAX_PERSONALITY_ITEMS = 5
