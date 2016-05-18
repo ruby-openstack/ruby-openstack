@@ -50,8 +50,16 @@ module Volume
     end
     alias :volume :get_volume
 
+    # Volume status must be 'available' or 'error'
     def delete_volume(vol_id)
       response = @connection.req("DELETE", "/#{@volume_path}/#{vol_id}")
+      true
+    end
+
+    # Volume status may be any: 'creating', 'deleting', 'in-use'
+    def force_delete_volume!(vol_id)
+      data = JSON.generate({'os-force_delete' => {}})
+      @connection.req('POST', "/volumes/#{vol_id}/action", data: data)
       true
     end
 

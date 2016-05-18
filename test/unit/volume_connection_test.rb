@@ -133,4 +133,13 @@ class VolumeConnectionTest < Test::Unit::TestCase
     assert_equal quotas['gigabytes_fast'], 300
     assert_equal quotas['volumes_slow'], -1
   end
+
+  def test_force_delete_volume!
+    response = mock()
+    response.stubs(code: '202')
+    @cinder.connection.stubs(:req).returns(response)
+
+    result = @cinder.force_delete_volume!('0ebf71f1-fe6b-4c61-af79-553901394e26')
+    assert_equal result, true
+  end
 end
