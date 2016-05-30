@@ -225,7 +225,7 @@ class Connection
       default_headers["X-Auth-Token"] = @authtoken if authok
       default_headers["X-Storage-Token"] = @authtoken if authok
       default_headers["Connection"] = "Keep-Alive"
-      default_headers["User-Agent"] = "OpenStack Ruby API #{OpenStack::VERSION}"
+      default_headers["User-Agent"] = "OpenStack Ruby API #{Gem::VERSION}"
       default_headers["Accept"] = "application/json"
       default_headers.merge(headers)
     end
@@ -572,4 +572,3 @@ class Exception
 end
 
 end
-
