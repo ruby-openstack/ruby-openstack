@@ -170,11 +170,11 @@ module Swift
 
     #for ruby 2.x
     def read(length, buffer=nil)
-      chunk = @file.read(length)
-
-      return nil if chunk.nil?
-      buffer << chunk if buffer
-
+      if buffer.nil?
+        chunk = @file.read(length)
+      else
+        chunk = @file.read(length, buffer)
+      end
       chunk
     end
 

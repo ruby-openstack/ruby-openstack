@@ -1,3 +1,5 @@
+require 'rubygems'
+
 module OpenStack
   class Connection
     attr_reader   :authuser
@@ -190,7 +192,6 @@ module OpenStack
 
     # This method actually makes the HTTP REST calls out to the server
     def csreq(method,server,path,port,scheme,headers = {},data = nil,attempts = 0, &block) # :nodoc:
-
       tries = @retries
       time = 3
 
@@ -208,7 +209,7 @@ module OpenStack
         response = @http[server].request(request)
       end
       if @is_debug
-        puts "REQUEST: #{method} => #{path}"
+        puts "REQUEST: #{auth_method} => #{path}"
         puts data if data
         puts "RESPONSE: #{response.body}"
         puts '----------------------------------------'
@@ -246,11 +247,13 @@ module OpenStack
 
     # Sets up standard HTTP headers
     def headerprep(headers = {}) # :nodoc:
+      spec = Gem::Specification::load("#{File.dirname(__FILE__)}/../../openstack.gemspec")
+
       default_headers = {}
       default_headers["X-Auth-Token"] = @authtoken if authok
       default_headers["X-Storage-Token"] = @authtoken if authok
       default_headers["Connection"] = "Keep-Alive"
-      default_headers["User-Agent"] = "OpenStack Ruby API #{OpenStack::VERSION}"
+      default_headers["User-Agent"] = "OpenStack Ruby API #{spec.version}"
       default_headers["Accept"] = "application/json"
       default_headers.merge(headers)
     end
