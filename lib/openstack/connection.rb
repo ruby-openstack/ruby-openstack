@@ -18,6 +18,14 @@ module OpenStack
     attr_reader   :auth_path
     attr_reader   :service_name
     attr_reader   :service_type
+    attr_reader   :user_domain
+    attr_reader   :user_domain_id
+    attr_reader   :project_id
+    attr_reader   :project_name
+    attr_reader   :project_domain_name
+    attr_reader   :project_domain_id
+    attr_reader   :domain_name
+    attr_reader   :domain_id
     attr_reader   :proxy_host
     attr_reader   :proxy_port
     attr_reader   :ca_cert
@@ -41,14 +49,23 @@ module OpenStack
     #
     #   options hash:
     #
-    #   :auth_method - Type of authentication - 'password', 'key', 'rax-kskey' - defaults to 'password'
     #   :username - Your OpenStack username or public key, depending on auth_method. *required*
+    #   :auth_method - Type of authentication - 'password', 'key', 'rax-kskey', 'token' - defaults to 'password'. 
+    #     For auth v3.0 valid options are 'password', 'token', 'password_user_id'
     #   :authtenant_name OR :authtenant_id - Your OpenStack tenant name or id *required*. Defaults to username.
     #     passing :authtenant will default to using that parameter as tenant name.
     #   :api_key - Your OpenStack API key *required* (either private key or password, depending on auth_method)
     #   :auth_url - Configurable auth_url endpoint.
     #   :service_name - (Optional for v2.0 auth only). The optional name of the compute service to use.
     #   :service_type - (Optional for v2.0 auth only). Defaults to "compute"
+    #   :user_domain - (Optional for v3.0 auth only). The optional name of the user domain.
+    #   :user_domain_id - (Optional for v3.0 auth only). Defaults to "default"
+    #   :project_id - (Optional for v3.0 auth only). For authorization scoping
+    #   :project_name - (Optional for v3.0 auth only). For authorization scoping
+    #   :project_domain_name - (Optional for v3.0 auth only). For authorization scoping
+    #   :project_domain_id - (Optional for v3.0 auth only). For authorization scoping
+    #   :domain_name - (Optional for v3.0 auth only). For authorization scoping
+    #   :domain_id - (Optional for v3.0 auth only). For authorization scoping
     #   :region - (Optional for v2.0 auth only). The specific service region to use. Defaults to first returned region.
     #   :retry_auth - Whether to retry if your auth token expires (defaults to true)
     #   :proxy_host - If you need to connect through a proxy, supply the hostname here
@@ -56,6 +73,7 @@ module OpenStack
     #   :ca_cert - path to a CA chain in PEM format
     #   :ssl_version - explicitly set an version (:SSLv3 etc, see  OpenSSL::SSL::SSLContext::METHODS)
     #   :is_debug - Only for development purpose for debug output
+    #   :endpoint_type - Type of endpoint. Optional. 'publicURL', 'internalURL', 'adminURL'
     #
     # The options hash is used to create a new OpenStack::Connection object
     # (private constructor) and this is passed to the constructor of OpenStack::Compute::Connection
@@ -94,6 +112,14 @@ module OpenStack
       @auth_method = options[:auth_method] || "password"
       @service_name = options[:service_name] || nil
       @service_type = options[:service_type] || "compute"
+      @user_domain_id = options[:user_domain_id] || "default"
+      @user_domain = options[:user_domain] || nil
+      @project_id = options[:project_id] || nil
+      @project_name = options[:project_name] || nil
+      @project_domain_name = options[:project_domain_name] || nil
+      @project_domain_id = options[:project_domain_id] || nil
+      @domain_name = options[:domain_name] || nil
+      @domain_id = options[:domain_id] || nil
       @region = options[:region] || @region = nil
       @regions_list = {} # this is populated during authentication - from the returned service catalogue
       @is_debug = options[:is_debug]
@@ -460,7 +486,6 @@ module OpenStack
       tries = connection.retries
       time = 3
 
-      # TODO: Refactor this for all auth classes
       begin
         server = Net::HTTP::Proxy(connection.proxy_host, connection.proxy_port).new(connection.auth_host, connection.auth_port)
         if connection.auth_scheme == "https"
@@ -484,74 +509,101 @@ module OpenStack
         raise OpenStack::Exception::Connection, "Unable to connect to #{server}"
       end
 
-      @uri = ''
+      # Build Auth JSON
+      auth = { "auth" => { "identity" => {} } }
 
-      # TODO: Add optional scope?
       case connection.auth_method.to_sym
       when :password
-        auth_data = JSON.generate({'auth' => {
-                                     'identity' => {
-                                       'methods' => ['password'],
-                                       'password' => {
-                                         'user' => {
-                                           'id' => connection.authuser,
-                                           'password' => connection.authkey}}}}})
+        auth["auth"]["identity"]["methods"] = ["password"]
+        auth["auth"]["identity"]["password"] = { "user" => { "name" => connection.authuser, "password" => connection.authkey } }
+        auth["auth"]["identity"]["password"]["user"]["domain"] = connection.user_domain ? { "name" => connection.user_domain } : { "id" => connection.user_domain_id }
+      when :password_user_id
+        auth["auth"]["identity"]["methods"] = ["password"]
+        auth["auth"]["identity"]["password"] = { "user" => { "id" => connection.authuser, "password" => connection.authkey } }
       when :token
-        auth_data = JSON.generate({'auth' => {
-                                     'identity' => {
-                                       'methods' => ['token'],
-                                       'token' => {
-                                         'id' => connection.authkey}}}})
+        auth["auth"]["identity"]["methods"] = ["token"]
+        auth["auth"]["identity"]["token"] = { "id" => connection.authkey }
       else
         raise Exception::InvalidArgument, "Unrecognized auth method #{connection.auth_method}."
       end
 
-      response = server.post(connection.auth_path.chomp('/') + '/auth/tokens',
-                             auth_data,
-                             {'Content-Type' => 'application/json'})
+      # handle project authentication scope
+      if (connection.project_id || connection.project_name) && (connection.project_domain_name || connection.project_domain_id)
+        auth["auth"]["scope"] = { "project" => { "domain" => {} } }
+        auth["auth"]["scope"]["project"]["name"] =  connection.project_name if connection.project_name
+        auth["auth"]["scope"]["project"]["id"] =  connection.project_id if connection.project_id
+        auth["auth"]["scope"]["project"]["domain"]["name"] = connection.project_domain_name if connection.project_domain_name
+        auth["auth"]["scope"]["project"]["domain"]["id"] = connection.project_domain_id if connection.project_domain_id
+      end
 
+      # handle domain authentication scope
+      if connection.domain_name || connection.domain_id
+        auth["auth"]["scope"] = { "domain" => {} }
+        auth["auth"]["scope"]["domain"]["name"] = connection.domain_name if connection.domain_name
+        auth["auth"]["scope"]["domain"]["id"] = connection.domain_id if connection.domain_id
+      end
+
+      response = server.post(connection.auth_path.chomp('/') + '/auth/tokens',
+                             JSON.generate(auth),
+                             {'Content-Type' => 'application/json'})
 
       if response.code =~ /^20./
         connection.authtoken = response['X-Subject-Token']
 
-        # Check if the used service is available
-        all_services = server.get(connection.auth_path.chomp('/') + '/services',
-                                  {'X-Auth-Token' => connection.authtoken,
-                                   'Content-Type' => 'application/json'})
+        resp_data=JSON.parse(response.body)
 
-        # Find the right service
-        service = nil
-        JSON.parse(all_services.body)['services'].each do |s|
-          next unless s['enabled']
-          service = s if s['type'] == connection.service_type
-        end
-        raise OpenStack::Exception::NotImplemented.new("The requested service \"#{connection.service_type}\" is not present.") if service.nil?
-        
-        # Fetch the URI for the right service and region
-        response = server.get(connection.auth_path.chomp('/') + '/endpoints',
-                              {'X-Auth-Token' => connection.authtoken,
-                               'Content-Type' => 'application/json'})
-        endpoints = JSON.parse(response.body)['endpoints']
-        endpoints.each do |endpoint|
-          next unless endpoint['enabled']
-          region = connection.region || endpoint['region']
-          if endpoint['service_id'] == service['id'] &&
-             endpoint['region'] == region
-            @uri = URI.parse(endpoint['url'])
+        catalog = resp_data["token"]["catalog"]
+        # Check if the used service is available
+        implemented_services = resp_data["token"]["catalog"].map {|service| service['type']}        
+        raise OpenStack::Exception::NotImplemented.new("The requested service: \"#{connection.service_type}\" is not present " +
+                                                       "in the returned service catalogue.", 501, "#{resp_data["access"]["serviceCatalog"]}") unless implemented_services.include?(connection.service_type)
+        catalog.each do |service|
+          service["endpoints"].each do |endpoint|
+            connection.regions_list[endpoint["region"]] ||= []
+            connection.regions_list[endpoint["region"]] << {:service=>service["type"], :versionId => endpoint["versionId"]}
+          end
+
+          # set use preset service name if set, otherwise ignore.
+          if connection.service_name
+            check_service_name = connection.service_name
+          else
+            check_service_name = service['name']
+          end
+
+          if service['type'] == connection.service_type and service['name'] == check_service_name
+            endpoints = service["endpoints"]
+            
+            # filter endpoints by interfacetype
+            interface_type = connection.endpoint_type.gsub('URL','')
+            endpoints = endpoints.select {|ep| ep['interface'] == interface_type}
+
+            # Select endpoint based on region
+            if connection.region
+              endpoints.each do |ep|
+                if ep["region"] and ep["region"].upcase == connection.region.upcase
+                  @uri = URI.parse(ep['url'])
+                end
+              end
+            else
+              @uri = URI.parse(endpoints[0]['url'])
+            end
+
+            if @uri == ""
+              raise OpenStack::Exception::Authentication, "No API endpoint for region #{connection.region}"
+            else
+              connection.service_host = @uri.host
+              connection.service_path = @uri.path
+              connection.service_port = @uri.port
+              connection.service_scheme = @uri.scheme
+              connection.authok = true
+            end
           end
         end
-
-        raise OpenStack::Exception::Authentication, "No API endpoint for region #{connection.region}" if @uri == ''
-
-        connection.service_host = @uri.host
-        connection.service_path = @uri.path.gsub('$(tenant_id)s', connection.authtenant)
-        connection.service_port = @uri.port
-        connection.service_scheme = @uri.scheme
-        connection.authok = true
       else
         connection.authtoken = false
         raise OpenStack::Exception::Authentication, "Authentication failed with response code #{response.code}"
       end
+      server.finish if server.started?
     end
   end
 
