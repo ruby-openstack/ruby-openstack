@@ -223,13 +223,11 @@ class Connection
 
     # Sets up standard HTTP headers
     def headerprep(headers = {}) # :nodoc:
-      spec = Gem::Specification::load("#{File.dirname(__FILE__)}/../../openstack.gemspec")
-
       default_headers = {}
       default_headers["X-Auth-Token"] = @authtoken if authok
       default_headers["X-Storage-Token"] = @authtoken if authok
       default_headers["Connection"] = "Keep-Alive"
-      default_headers["User-Agent"] = "OpenStack Ruby API #{spec.version}"
+      default_headers["User-Agent"] = "OpenStack Ruby API #{Gem::VERSION}"
       default_headers["Accept"] = "application/json"
       default_headers.merge(headers)
     end
