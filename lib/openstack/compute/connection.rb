@@ -510,10 +510,16 @@ module Compute
       true
     end
 
-    def get_floating_ip_polls
+    def get_floating_ip_pools
       check_extension 'os-floating-ip-pools'
       response = @connection.req('GET', '/os-floating-ip-pools')
       JSON.parse(response.body)['floating_ip_pools']
+    end
+
+    #deprecated - please do not use this typo method :)
+    def get_floating_ip_polls
+      puts "get_floating_ip_polls() is DEPRECATED: Please use get_floating_ip_pools() without typo!"
+      self.get_floating_ip_pools
     end
 
     def get_floating_ips_bulk
