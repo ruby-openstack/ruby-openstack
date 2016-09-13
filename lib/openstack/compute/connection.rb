@@ -117,7 +117,9 @@ module Compute
     #   => "NewServerSHMGpvI"
     def create_server(options)
       raise OpenStack::Exception::MissingArgument, "Server name, flavorRef, and imageRef, must be supplied" unless (options[:name] && options[:flavorRef] && options[:imageRef])
-      options[:personality] = Personalities.get_personality(options[:personality])
+      if options[:personality]
+        options[:personality] = Personalities.get_personality(options[:personality])
+      end
       options[:security_groups] = (options[:security_groups] || []).inject([]){|res, c| res << {"name"=>c} ;res}
       data = JSON.generate(:server => options)
       response = @connection.csreq("POST",@connection.service_host,"#{@connection.service_path}/servers",@connection.service_port,@connection.service_scheme,{'content-type' => 'application/json'},data)
@@ -125,7 +127,7 @@ module Compute
       server_info = JSON.parse(response.body)['server']
       server = OpenStack::Compute::Server.new(self,server_info['id'])
       server.adminPass = server_info['adminPass']
-      return server
+      server
     end
 
     # Returns an array of hashes listing available server images that you have access too,
