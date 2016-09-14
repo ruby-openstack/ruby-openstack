@@ -550,12 +550,23 @@ class Connection
                              JSON.generate(auth),
                              {'Content-Type' => 'application/json'})
 
+      # debugging
+      if connection.is_debug
+        puts "REQUEST: POST => #{connection.auth_path.chomp('/') + '/auth/tokens'}"
+        puts "RESPONSE: #{response.body}"
+        puts '----------------------------------------'
+      end
+
       if response.code =~ /^20./
         connection.authtoken = response['X-Subject-Token']
 
         resp_data=JSON.parse(response.body)
 
         catalog = resp_data["token"]["catalog"]
+        unless catalog
+          raise OpenStack::Exception::Authentication, "No service catalog returned. Maybe your auth request is unscoped. Please check if your selected user has a default project."
+        end
+
         # Check if the used service is available
         implemented_services = resp_data["token"]["catalog"].map {|service| service['type']}
         raise OpenStack::Exception::NotImplemented.new("The requested service: \"#{connection.service_type}\" is not present " +
