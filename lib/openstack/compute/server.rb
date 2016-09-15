@@ -349,6 +349,47 @@ module Compute
       true
     end
 
+    # Lists all interfaces from this server.
+    #
+    #   >> server.interface_list
+    #   => array
+    def interface_list
+      response = @compute.connection.csreq("GET",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/os-interface",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'})
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      JSON::parse(response.body)["interfaceAttachments"]
+    end
+
+    # Returns all details about the interface on this server.
+    #
+    #   >> server.interface_list
+    #   => array
+    def interface_list(id)
+      response = @compute.connection.csreq("GET",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/os-interface/#{id}",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'})
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      JSON::parse(response.body)["interfaceAttachment"]
+    end
+
+    # Creates a new interface on this server.
+    #
+    #   >> server.interface_create
+    #   => array
+    def interface_create(options)
+      data = JSON.generate(:interfaceAttachment => options)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/os-interface",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      JSON::parse(response.body)["interfaceAttachment"]
+    end
+
+    # Deleted a specific interface from this server.
+    #
+    #   >> server.interface_delete
+    #   => true
+    def interface_delete(id)
+      response = @compute.connection.csreq("DELETE",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/os-interface/#{id}",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'})
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
   end
 end
 end
