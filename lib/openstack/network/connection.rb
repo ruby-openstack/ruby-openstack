@@ -91,6 +91,13 @@ module Network
       OpenStack::Network::Port.new(JSON.parse(response.body)["port"])
     end
 
+    def update_port(id, options)
+      data = JSON.generate(:port => options)
+      response = @connection.req("PUT", "/ports/#{id}", {:data => data})
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      OpenStack::Network::Port.new(JSON.parse(response.body)["port"])
+    end
+
     def delete_port(id)
       @connection.req("DELETE", "/ports/#{id}")
       true
