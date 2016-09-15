@@ -361,9 +361,9 @@ module Compute
 
     # Returns all details about the interface on this server.
     #
-    #   >> server.interface_list
+    #   >> server.interface_details
     #   => array
-    def interface_list(id)
+    def interface_details(id)
       response = @compute.connection.csreq("GET",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/os-interface/#{id}",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'})
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       JSON::parse(response.body)["interfaceAttachment"]
