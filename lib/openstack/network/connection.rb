@@ -18,8 +18,9 @@ module Network
       @connection.authok
     end
 
-    def list_networks
-      response = @connection.req("GET", "/networks")
+    def list_networks(options = {})
+      path = options.empty? ? "/networks" : "/networks?#{options.to_query}"
+      response = @connection.req("GET", path)
       nets_hash = JSON.parse(response.body)["networks"]
       nets_hash.inject([]){|res, current| res << OpenStack::Network::Network.new(current); res}
     end
