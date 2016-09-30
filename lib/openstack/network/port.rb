@@ -12,6 +12,7 @@ module Network
     attr_reader :device_id
     attr_reader :device_owner
     attr_reader :tenant_id
+    attr_reader :qos_policy_id
 
     def initialize(port_hash={})
       @id = port_hash["id"]
@@ -24,6 +25,7 @@ module Network
       @device_id = port_hash["device_id"]
       @device_owner = port_hash["device_owner"]
       @tenant_id = port_hash["tenant_id"]
+      @qos_policy_id = port_hash["qos_policy_id"]
     end
 
 

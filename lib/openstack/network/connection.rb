@@ -159,6 +159,27 @@ module Network
       end
     end
 
+    def create_qos_policy(options)
+      data = JSON.generate(:policy => options)
+      response = @connection.req("POST", "/qos/policies", {:data => data})
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      OpenStack::Network::QoSPolicy.new(@connection, JSON.parse(response.body)["policy"])
+    end
+
+    def list_qos_policies(options = {})
+      path = options.empty? ? "/qos/policies" : "/qos/policies?#{options.to_query}"
+      response = @connection.req("GET", path)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      qos_hash = JSON.parse(response.body)["policies"]
+      qos_hash.inject([]){|res, current| res << OpenStack::Network::QoSPolicy.new(@connection, current); res}
+    end
+
+    def get_qos_policy(policy_id)
+      response = @connection.req("GET", "/qos/policies/#{policy_id}")
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      OpenStack::Network::QoSPolicy.new(@connection, JSON.parse(response.body)["policy"])
+    end
+
   end
 
 end

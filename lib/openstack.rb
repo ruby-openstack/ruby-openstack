@@ -33,6 +33,8 @@ module OpenStack
   require 'openstack/network/subnet'
   require 'openstack/network/router'
   require 'openstack/network/port'
+  require 'openstack/network/qos_policy'
+  require 'openstack/network/qos_bandwidth_limit_rule'
   require 'openstack/identity/connection'
   require 'openstack/identity/tenant'
   require 'openstack/identity/user'
