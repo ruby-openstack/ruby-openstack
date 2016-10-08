@@ -180,6 +180,18 @@ module Network
       OpenStack::Network::QoSPolicy.new(@connection, JSON.parse(response.body)["policy"])
     end
 
+    def get_ip_availabilities
+      response = @connection.req("GET", "/network-ip-availabilities")
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      JSON.parse(response.body)["network_ip_availabilities"]
+    end
+
+    def get_ip_availability(network_id)
+      response = @connection.req("GET", "/network-ip-availabilities/#{network_id}")
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      JSON.parse(response.body)["network_ip_availability"]
+    end
+
   end
 
 end
