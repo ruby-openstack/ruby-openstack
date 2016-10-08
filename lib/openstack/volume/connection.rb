@@ -113,6 +113,14 @@ module Volume
       JSON.parse(response.body)['quota_set']
     end
 
+    # Lists all back-end storage pools that are known to the scheduler service
+    def get_pools(details = true)
+      path = details ? "/scheduler-stats/get_pools?detail=true" : "/scheduler-stats/get_pools"
+      response = @connection.req('GET', path)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      JSON.parse(response.body)['pools']
+    end
+
     private
 
     #fudge... not clear if volumes support is available as 'native' volume API or
