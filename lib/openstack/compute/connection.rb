@@ -547,6 +547,14 @@ module Compute
       JSON.generate(response)
     end
 
+    # Shows summary statistics for all hypervisors over all compute nodes
+    def get_hypervisor_stats
+      check_extension 'os-floating-ips-bulk'
+      response = @connection.req('GET', '/os-hypervisors/statistics')
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      JSON.parse(response.body)['hypervisor_statistics']
+    end
+
     private
 
     def check_extension(name)
