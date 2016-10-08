@@ -6,12 +6,12 @@
 
 Gem::Specification.new do |s|
   s.name = "openstack"
-  s.version = "3.2.0"
+  s.version = "3.3.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.require_paths = ["lib"]
   s.authors = ["Dan Prince", "Marios Andreou", "Naveed Massjouni", "Aaron Fischer", "Alexander Birkner"]
-  s.date = "2016-09-30"
+  s.date = "2016-10-08"
   s.description = "API Bindings for OpenStack."
   s.email = ["dprince@redhat.com", "marios@redhat.com", "naveedm9@gmail.com", "aaron.fischer@marbis.net", "alexander.birkner@marbis.net"]
   s.extra_rdoc_files = [
