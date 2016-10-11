@@ -221,6 +221,55 @@ module Compute
       JSON.parse(response.body)
     end
 
+    #  Lists, creates, deletes, and updates the extra-specs or keys for a flavor.
+
+    # Creates extra specs for a flavor, by ID
+    #
+    # create_flavor_extra_specs('999aca87-5c8a-4862-92fe-deb8bb024b6b', { 'quota:disk_total_iops_sec' => 1000 })
+    # => { 'quota:disk_total_iops_sec' => 1000 }
+    def create_flavor_extra_specs(flavor_id, options)
+      data = JSON.generate(extra_specs: options)
+      response = @connection.req('POST', "/flavors/#{flavor_id}/os-extra_specs", data: data)
+      JSON.parse(response.body)['extra_specs']
+    end
+
+    # Lists all extra specs for a flavor, by ID.
+    #
+    # flavor_extra_specs('999aca87-5c8a-4862-92fe-deb8bb024b6b')
+    # => { 'quota:disk_total_iops_sec' => 1000 }
+    def flavor_extra_specs(flavor_id)
+      response = @connection.req('GET', "/flavors/#{flavor_id}/os-extra_specs")
+      JSON.parse(response.body)['extra_specs']
+    end
+
+    # Shows an extra spec, by key, for a flavor, by ID.
+    #
+    # flavor_extra_spec('999aca87-5c8a-4862-92fe-deb8bb024b6b', 'quota:disk_total_iops_sec')
+    # => { 'quota:disk_total_iops_sec' => 1000 }
+    def flavor_extra_spec(flavor_id, flavor_extra_spec_key)
+      response = @connection.req('GET', "/flavors/#{flavor_id}/os-extra_specs/#{flavor_extra_spec_key}")
+      JSON.parse(response.body)
+    end
+
+    # Updates an extra spec, by key, for a flavor, by ID.
+    #
+    # update_flavor_extra_spec('999aca87-5c8a-4862-92fe-deb8bb024b6b', 'quota:disk_total_iops_sec', 2000)
+    # => { 'quota:disk_total_iops_sec' => 2000 }
+    def update_flavor_extra_spec(flavor_id, flavor_extra_spec_key, new_value)
+      data = JSON.generate(flavor_extra_spec_key => new_value)
+      response = @connection.req('PUT', "/flavors/#{flavor_id}/os-extra_specs/#{flavor_extra_spec_key}", data: data)
+      JSON.parse(response.body)
+    end
+
+    # Deletes an extra spec, by key, for a flavor, by ID.
+    #
+    # delete_flavor_extra_spec('999aca87-5c8a-4862-92fe-deb8bb024b6b', 'quota:disk_total_iops_sec')
+    # => true
+    def delete_flavor_extra_spec(flavor_id, flavor_extra_spec_key)
+      @connection.req('DELETE', "/flavors/#{flavor_id}/os-extra_specs/#{flavor_extra_spec_key}")
+      true
+    end
+
     # Returns the current state of the programatic API limits.  Each account has certain limits on the number of resources
     # allowed in the account, and a rate of API operations.
     #
