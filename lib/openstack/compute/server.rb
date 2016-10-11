@@ -102,9 +102,7 @@ module Compute
     #   >> server.stop()
     #   => true
     def stop()
-      data = JSON.generate(:suspend => nil)
-      puts data
-      pp "About to post ACTION"
+      data = JSON.generate('os-stop' => nil)
       response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       true
@@ -388,6 +386,16 @@ module Compute
       response = @compute.connection.csreq("DELETE",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/os-interface/#{id}",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'})
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       true
+    end
+
+    # List volume attachments for an instance
+    #
+    #   >> server.get_volume_attachments
+    #   => array
+    def get_volume_attachments
+      response = @compute.connection.req('GET', "/servers/#{@id}/os-volume_attachments")
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      JSON.parse(response.body)['volumeAttachments']
     end
 
   end
