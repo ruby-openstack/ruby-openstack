@@ -114,8 +114,8 @@ module Compute
     #
     #   >> server.start()
     #   => true
-    def start()
-      data = JSON.generate(:resume => nil)
+    def start
+      data = JSON.generate('os-start' => nil)
       response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       true
