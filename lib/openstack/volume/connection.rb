@@ -5,6 +5,7 @@ module Volume
 
     attr_accessor   :connection
     attr_reader     :volumes_native
+    attr_reader     :volume_path
 
     def initialize(connection)
       @connection = connection
@@ -30,7 +31,7 @@ module Volume
       response = @connection.csreq("POST",@connection.service_host,"#{@connection.service_path}/#{@volume_path}",@connection.service_port,@connection.service_scheme,{'content-type' => 'application/json'},data)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       volume_info = JSON.parse(response.body)["volume"]
-      volume = OpenStack::Volume::Volume.new(volume_info)
+      volume = OpenStack::Volume::Volume.new(self, volume_info)
     end
 
     #no options documented in API at Nov 2012
@@ -38,7 +39,7 @@ module Volume
     def list_volumes
       response = @connection.req("GET", "/#{@volume_path}")
       volumes_hash = JSON.parse(response.body)["volumes"]
-      volumes_hash.inject([]){|res, current| res << OpenStack::Volume::Volume.new(current); res}
+      volumes_hash.inject([]){|res, current| res << OpenStack::Volume::Volume.new(self, current); res}
     end
     alias :volumes :list_volumes
 
@@ -46,7 +47,7 @@ module Volume
     def get_volume(vol_id)
       response = @connection.req("GET", "/#{@volume_path}/#{vol_id}")
       volume_hash = JSON.parse(response.body)["volume"]
-      OpenStack::Volume::Volume.new(volume_hash)
+      OpenStack::Volume::Volume.new(self, volume_hash)
     end
     alias :volume :get_volume
 

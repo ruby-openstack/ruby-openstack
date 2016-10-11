@@ -3,6 +3,7 @@ module OpenStack
     class Volume
 
     attr_reader :id
+    attr_reader :connection
     attr_reader :display_name
     attr_reader :display_description
     attr_reader :size
@@ -14,7 +15,18 @@ module OpenStack
     attr_reader :created_at
     attr_reader :status
 
-    def initialize(volume_info)
+    def initialize(connection, volume_info)
+      @connection = connection.connection
+      @volume_path = connection.volume_path
+      self.populate(volume_info)
+    end
+
+    def populate(volume_info = nil)
+      if not volume_info and @id
+        response = @connection.req("GET", "/#{@volume_path}/#{@id}")
+        volume_info = JSON.parse(response.body)["volume"]
+      end
+
       @id  = volume_info["id"]
       @display_name  = volume_info["display_name"] || volume_info["displayName"]
       @display_description  = volume_info["display_description"] || volume_info["displayDescription"]
@@ -26,6 +38,22 @@ module OpenStack
       @attachments  = volume_info["attachments"]
       @created_at  = volume_info["created_at"] || volume_info["createdAt"]
       @status = volume_info["status"]
+    end
+
+    def extend!(size)
+      data = JSON.generate({'os-extend' => {'new_size' => size}})
+      response = @connection.req('POST', "/#{@volume_path}/#{@id}/action", {:data => data})
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      self.populate
+      true
+    end
+
+    def status!(status)
+      data = JSON.generate({'os-reset_status' => {'status' => status}})
+      response = @connection.req('POST', "/#{@volume_path}/#{@id}/action", {:data => data})
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      self.populate
+      true
     end
 
     end
