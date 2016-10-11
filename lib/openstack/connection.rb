@@ -98,6 +98,8 @@ class Connection
           OpenStack::Image::Connection.new(connection)
         when "network"
           OpenStack::Network::Connection.new(connection)
+        when "metering"
+          OpenStack::Metering::Connection.new(connection)
         when "identity"
           OpenStack::Identity::Connection.new(connection)
        else
@@ -146,6 +148,7 @@ class Connection
       @authok = false
       @http = {}
       @quantum_version = 'v2.0' if @service_type == 'network'
+      @quantum_version = 'v2' if @service_type == 'metering'
       @endpoint_type = options[:endpoint_type] || "publicURL"
     end
 

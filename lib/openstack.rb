@@ -15,6 +15,7 @@ module OpenStack
 
   $:.unshift(File.dirname(__FILE__))
   require 'openstack/connection'
+  require 'openstack/metering/connection'
   require 'openstack/compute/connection'
   require 'openstack/compute/server'
   require 'openstack/compute/image'
