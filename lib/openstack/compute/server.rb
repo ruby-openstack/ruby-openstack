@@ -347,6 +347,36 @@ module Compute
       true
     end
 
+    # Add a fixed ip from a specific network to the instance
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.add_fixed_ip
+    #   => true
+    def add_fixed_ip(network_id)
+      data = JSON.generate(:addFixedIp => {
+          :networkId => network_id
+      })
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
+    # Remove a specific fixed ip from the instance
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.remove_fixed_ip
+    #   => true
+    def remove_fixed_ip(ip)
+      data = JSON.generate(:removeFixedIp => {
+          :address => ip
+      })
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
     # Lists all interfaces from this server.
     #
     #   >> server.interface_list
