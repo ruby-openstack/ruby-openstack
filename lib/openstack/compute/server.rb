@@ -347,6 +347,32 @@ module Compute
       true
     end
 
+    # Sends an API request to rescue this server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.rescue
+    #   => true
+    def rescue(options = nil)
+      data = JSON.generate(:rescue => options)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
+    # Sends an API request to unrescue this server.
+    #
+    # Returns true if the API call succeeds.
+    #
+    #   >> server.unrescue
+    #   => true
+    def unrescue
+      data = JSON.generate(:unrescue => nil)
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
     # Add a fixed ip from a specific network to the instance
     #
     # Returns true if the API call succeeds.
