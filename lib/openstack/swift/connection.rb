@@ -169,7 +169,7 @@ module Swift
     end
 
     #for ruby 2.x
-    def read(length, buffer=nil)
+    def read(length=nil, buffer=nil)
       if buffer.nil?
         chunk = @file.read(length)
       else
