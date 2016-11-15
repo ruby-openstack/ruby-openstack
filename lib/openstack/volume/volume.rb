@@ -56,6 +56,12 @@ module OpenStack
       true
     end
 
+    def delete!
+      response = @connection.req("DELETE", "/#{@volume_path}/#{@id}")
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      true
+    end
+
     end
   end
 end
