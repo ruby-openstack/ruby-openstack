@@ -22,16 +22,19 @@ module Compute
 
     attr_reader :address
     attr_reader :label
+    attr_reader :mac
     attr_reader :version
 
-    def initialize(label, address, version = 4)
+    def initialize(label, address, version = 4, mac = nil)
       @label = label
       if address.class == Hash then
         @address = address["addr"]
         @version = address["version"]
+        @mac = address["OS-EXT-IPS-MAC:mac_addr"]
       else
         @address = address
         @version = version
+        @mac = mac
       end
     end
 
