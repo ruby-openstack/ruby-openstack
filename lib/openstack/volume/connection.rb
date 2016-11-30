@@ -31,13 +31,14 @@ module Volume
       response = @connection.csreq("POST",@connection.service_host,"#{@connection.service_path}/#{@volume_path}",@connection.service_port,@connection.service_scheme,{'content-type' => 'application/json'},data)
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       volume_info = JSON.parse(response.body)["volume"]
-      volume = OpenStack::Volume::Volume.new(self, volume_info)
+      OpenStack::Volume::Volume.new(self, volume_info)
     end
 
     #no options documented in API at Nov 2012
     #(e.g. like limit/marker as used in Nova for servers)
-    def list_volumes
-      response = @connection.req("GET", "/#{@volume_path}")
+    def list_volumes(options = {})
+      path = options.empty? ? "/#{@volume_path}/detail" : "/#{@volume_path}/detail?#{options.to_query}"
+      response = @connection.req("GET", path)
       volumes_hash = JSON.parse(response.body)["volumes"]
       volumes_hash.inject([]){|res, current| res << OpenStack::Volume::Volume.new(self, current); res}
     end
