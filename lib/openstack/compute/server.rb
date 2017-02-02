@@ -7,6 +7,7 @@ module Compute
     attr_reader   :id
     attr_reader   :name
     attr_reader   :libvirt_id
+    attr_reader   :fault
     attr_reader   :status
     attr_reader   :progress
     attr_reader   :accessipv4
@@ -59,6 +60,7 @@ module Compute
       @id        = data["id"] || data["uuid"]
       @name      = data["name"]
       @libvirt_id = data["OS-EXT-SRV-ATTR:instance_name"]
+      @fault = data["fault"]
       @status    = data["status"]
       @progress  = data["progress"]
       @addresses = get_addresses(data["addresses"])
