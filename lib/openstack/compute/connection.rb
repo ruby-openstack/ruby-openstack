@@ -126,7 +126,7 @@ module Compute
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       server_info = JSON.parse(response.body)['server']
       server = OpenStack::Compute::Server.new(self,server_info['id'])
-      server.adminPass = server_info['adminPass']
+      server.adminPass = server_info['adminPass'] if server_info['adminPass']
       server
     end
 

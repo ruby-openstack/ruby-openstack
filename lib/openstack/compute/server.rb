@@ -190,7 +190,7 @@ module Compute
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       data = JSON.parse(response.body)['server']
       self.populate(data)
-      self.adminPass = data['adminPass']
+      self.adminPass = data['adminPass'] if data['adminPass']
       true
     end
 
