@@ -37,6 +37,7 @@ module Swift
     #                    :metadata=>{key=>value, key1=>value1, ...}
     #                    :content_type=>content type of created object
     #                    :etag=>MD5 checksum of object data to be compared to that on server side
+    #                    :cache_control=>cache control header
     #                    :manifest=>set manifest header for segmented large object
     #                   }
     #
@@ -49,6 +50,7 @@ module Swift
       provided_headers = (headers[:metadata] || {}).inject({}){|res, (k,v)| ((k.to_s.match /^X-Object-Meta-/i) ? res[k.to_s]=v : res["X-Object-Meta-#{k.to_s}"]=v) ;res}
       provided_headers["content-type"] = headers[:content_type] unless headers[:content_type].nil?
       provided_headers["ETag"] = headers[:etag] unless headers[:etag].nil?
+      provided_headers["Cache-Control"] = headers[:cache_control] unless headers[:cache_control].nil?
       provided_headers["X-Object-Manifest"] = headers[:manifest] unless headers[:manifest].nil?
       if data.nil? #just create an empty object
         path = "/#{container.name}/#{objectname}"
@@ -64,7 +66,7 @@ module Swift
     #  object = container.object("conversion_helper.rb")
     #  => #<OpenStack::Swift::StorageObject:0xb7692488  ....
     #  object.object_metadata
-    #  => {:manifest=>nil, :bytes=>"1918", :content_type=>"application/octet-stream", :metadata=>{"foo"=>"bar, "herpa"=>"derp"}, :etag=>"1e5b089a1d92052bcf759d86465143f8", :last_modified=>"Tue, 17 Apr 2012 08:46:35 GMT"}
+    #  => {:manifest=>nil, :bytes=>"1918", :content_type=>"application/octet-stream", :metadata=>{"foo"=>"bar, "herpa"=>"derp"}, :etag=>"1e5b089a1d92052bcf759d86465143f8", :last_modified=>"Tue, 17 Apr 2012 08:46:35 GMT", :cache_control=>nil}
     #
     def object_metadata
       path = "/#{@containername}/#{@name}"
@@ -74,6 +76,7 @@ module Swift
                :content_type=>resphash["content-type"][0],
                :last_modified=>resphash["last-modified"][0],
                :etag=>resphash["etag"][0],
+               :cache_control=> (resphash.has_key?("cache-control") ? resphash["cache-control"][0] : nil),
                :manifest=> (resphash.has_key?("x-object-manifest") ? resphash["x-object-manifest"][0] : nil),
                :metadata=>{}}
       resphash.inject({}){|res, (k,v)| meta[:metadata].merge!({ k.gsub("x-object-meta-", "") => v.first }) if k.match(/^x-object-meta-/)}
@@ -113,6 +116,13 @@ module Swift
     # => "application/json"
     def content_type
       self.object_metadata[:content_type]
+    end
+
+    # Cache-Control header of the object
+    # obj.cache_control
+    # => "application/json"
+    def cache_control
+      self.object_metadata[:cache_control]
     end
 
     # Retrieves the data from an object and stores the data in memory.  The data is returned as a string.
