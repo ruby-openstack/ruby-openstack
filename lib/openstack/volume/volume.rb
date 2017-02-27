@@ -28,7 +28,7 @@ module OpenStack
       end
 
       @id  = volume_info["id"]
-      @display_name  = volume_info["display_name"] || volume_info["displayName"]
+      @display_name  = volume_info["display_name"] || volume_info["displayName"] || volume_info["name"]
       @display_description  = volume_info["display_description"] || volume_info["displayDescription"]
       @size  = volume_info["size"]
       @volume_type  = volume_info["volume_type"] || volume_info["volumeType"]
