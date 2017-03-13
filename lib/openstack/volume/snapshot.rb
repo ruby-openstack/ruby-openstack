@@ -12,7 +12,7 @@ module OpenStack
 
       def initialize(snap_info)
         @id = snap_info["id"]
-        @display_name = snap_info["display_name"] || snap_info["displayName"]
+        @display_name = snap_info["display_name"] || snap_info["displayName"] || snap_info["name"]
         @display_description = snap_info["display_description"] || snap_info["displayDescription"]
         @volume_id = snap_info["volume_id"] || snap_info["volumeId"]
         @status = snap_info["status"]
