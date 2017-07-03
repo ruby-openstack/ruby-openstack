@@ -6,6 +6,7 @@ module OpenStack
       attr_reader :ram
       attr_reader :disk
       attr_reader :vcpus
+      attr_reader :disabled
 
       # This class provides an object for the "Flavor" of a server.  The Flavor can generally be taken as the server specification,
       # providing information on things like memory and disk space.
@@ -17,6 +18,7 @@ module OpenStack
         @ram = flavor_info['ram']
         @disk = flavor_info['disk']
         @vcpus = flavor_info['vcpus']
+        @disabled = flavor_info['DISABLED:disabled']
        end
     end
   end
