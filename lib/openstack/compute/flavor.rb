@@ -18,7 +18,7 @@ module OpenStack
         @ram = flavor_info['ram']
         @disk = flavor_info['disk']
         @vcpus = flavor_info['vcpus']
-        @disabled = flavor_info['DISABLED:disabled']
+        @disabled = flavor_info['OS-FLV-DISABLED:disabled']
        end
     end
   end
