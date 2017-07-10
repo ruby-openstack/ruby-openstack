@@ -205,6 +205,33 @@ module Swift
     end
 
 
+    # Removes multiple objects from a container in a single request.
+    # Up to 10,000 objects may be deleted in a single request.
+    # The server will respond with 200 OK for all requests.
+    # response.body must be inspected for actual results.
+    #
+    #   Specify objectnames [Array<String>] Object names to be deleted.
+    #
+    #   container.bulk_delete_objects(['new.txt', 'nex2.txt'])
+    #   => #<Net::HTTPOK 200 OK readbody=true>
+    #
+    #   response.body:
+    #   {"Number Not Found"=>0, "Response Status"=>"200 OK", "Errors"=>[], "Number Deleted"=>2, "Response Body"=>""}
+    #
+    def bulk_delete_objects(objectnames)
+      body = objectnames.map do |name|
+        object_name = "#{@name}/#{name}"
+        URI.encode(object_name)
+      end.join("\n")
+
+      path = '?bulk-delete=true'
+
+      headers = { 'content-type' => 'text/plain' }
+      response = @swift.connection.req("POST", path, { :data => body, :headers => headers })
+      response.body = JSON.parse(response.body)
+      response
+    end
+
     def to_s # :nodoc:
       @name
     end
