@@ -148,7 +148,7 @@ class Connection
       @authok = false
       @http = {}
       @quantum_version = 'v2.0' if @service_type == 'network'
-      @quantum_version = 'v2' if @service_type == 'metering'
+      @quantum_version = 'v2' if @service_type == 'metering' || @service_type == 'image'
       @endpoint_type = options[:endpoint_type] || "publicURL"
     end
 
