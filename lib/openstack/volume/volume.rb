@@ -13,6 +13,7 @@ module OpenStack
     attr_reader :snapshot_id
     attr_reader :attachments
     attr_reader :created_at
+    attr_reader :updated_at
     attr_reader :status
 
     def initialize(connection, volume_info)
@@ -37,6 +38,7 @@ module OpenStack
       @snapshot_id  = volume_info["snapshot_id"] || volume_info["snapshotId"]
       @attachments  = volume_info["attachments"]
       @created_at  = volume_info["created_at"] || volume_info["createdAt"]
+      @updated_at  = volume_info["updated_at"]
       @status = volume_info["status"]
     end
 

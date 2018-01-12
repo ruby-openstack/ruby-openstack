@@ -52,8 +52,13 @@ module Volume
     end
     alias :volume :get_volume
 
-    def delete_volume(vol_id)
-      response = @connection.req("DELETE", "/#{@volume_path}/#{vol_id}")
+    def delete_volume(vol_id, force = false)
+      if force
+        data = JSON.generate({'os-force_delete' => {}})
+        @connection.req("POST", "/#{@volume_path}/#{vol_id}/action", {data: data})
+      else
+        @connection.req("DELETE", "/#{@volume_path}/#{vol_id}")
+      end
       true
     end
 
