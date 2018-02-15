@@ -201,9 +201,10 @@ class Connection
       tries = @retries
       time = 3
 
-      request_id = SecureRandom.uuid
+      request_id = "req-#{SecureRandom.uuid}"
       started_timestamp = Time.now.to_f * 1000
       log_request(request_id, "REQUEST: #{method.to_s} => #{scheme}://#{server}#{path}")
+      headers.store('X-Openstack-Request-Id', request_id)
 
       hdrhash = headerprep(headers)
       start_http(server,path,port,scheme,hdrhash)
