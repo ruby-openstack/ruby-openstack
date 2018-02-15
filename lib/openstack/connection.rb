@@ -122,6 +122,7 @@ class Connection
       @user_domain = options[:user_domain] || nil
       @project_id = options[:project_id] || nil
       @project_name = options[:project_name] || nil
+      @logger = options[:logger] || nil
       @project_domain_name = options[:project_domain_name] || nil
       @project_domain_id = options[:project_domain_id] || nil
       @domain_name = options[:domain_name] || nil
@@ -200,6 +201,10 @@ class Connection
       tries = @retries
       time = 3
 
+      request_id = SecureRandom.uuid
+      started_timestamp = Time.now.to_f * 1000
+      log_request(request_id, "REQUEST: #{method.to_s} => #{scheme}://#{server}#{path}")
+
       hdrhash = headerprep(headers)
       start_http(server,path,port,scheme,hdrhash)
       request = Net::HTTP.const_get(method.to_s.capitalize).new(path,hdrhash)
@@ -213,6 +218,7 @@ class Connection
       else
         response = @http[server].request(request)
       end
+      log_request(request_id, "RESPONSE: Code => #{response.code} Time => #{(Time.now.to_f * 1000) - started_timestamp}ms")
       if @is_debug
         puts "REQUEST: #{method.to_s} => #{scheme}://#{server}#{path}"
         puts data if data
@@ -249,6 +255,12 @@ class Connection
     end
 
     private
+
+    def log_request(request_id, message)
+      if @logger.kind_of?(Logger)
+        @logger.info("#{request_id} - #{message}")
+      end
+    end
 
     # Sets up standard HTTP headers
     def headerprep(headers = {}) # :nodoc:

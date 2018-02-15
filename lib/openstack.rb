@@ -7,6 +7,8 @@ module OpenStack
   require 'rubygems'
   require 'json'
   require 'date'
+  require 'securerandom'
+  require 'logger'
 
   unless "".respond_to? :each_char
     require "jcode"
