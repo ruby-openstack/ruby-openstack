@@ -9,6 +9,7 @@ module Compute
     attr_reader   :libvirt_id
     attr_reader   :fault
     attr_reader   :status
+    attr_reader   :state
     attr_reader   :progress
     attr_reader   :accessipv4
     attr_reader   :accessipv6
@@ -62,6 +63,7 @@ module Compute
       @libvirt_id = data["OS-EXT-SRV-ATTR:instance_name"]
       @fault = data["fault"]
       @status    = data["status"]
+      @state  = data["OS-EXT-STS:task_state"]
       @progress  = data["progress"]
       @addresses = get_addresses(data["addresses"])
       @metadata  = OpenStack::Compute::Metadata.new(@compute, path, data["metadata"])
