@@ -151,6 +151,7 @@ class Connection
       @quantum_version = 'v2.0' if @service_type == 'network'
       @quantum_version = 'v2' if @service_type == 'metering'
       @endpoint_type = options[:endpoint_type] || "publicURL"
+      @semaphore = Mutex.new
     end
 
     #specialised from of csreq for PUT object... uses body_stream if possible
@@ -172,7 +173,10 @@ class Connection
         request.body = data
       end
       start_http(server,path,port,scheme,hdrhash)
-      response = @http[server].request(request)
+      response = nil
+      @semaphore.synchronize do
+        response = @http[server].request(request)
+      end
       if @is_debug
         puts "REQUEST: PUT => #{path}"
         puts data if data
@@ -210,14 +214,17 @@ class Connection
       start_http(server,path,port,scheme,hdrhash)
       request = Net::HTTP.const_get(method.to_s.capitalize).new(path,hdrhash)
       request.body = data
-      if block_given?
-        response =  @http[server].request(request) do |res|
-          res.read_body do |b|
-            yield b
+      response = nil
+      @semaphore.synchronize do
+        if block_given?
+          response =  @http[server].request(request) do |res|
+            res.read_body do |b|
+              yield b
+            end
           end
+        else
+          response = @http[server].request(request)
         end
-      else
-        response = @http[server].request(request)
       end
       log_request(request_id, "RESPONSE: Code => #{response.code} Time => #{(Time.now.to_f * 1000) - started_timestamp}ms")
       if @is_debug

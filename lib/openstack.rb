@@ -9,6 +9,7 @@ module OpenStack
   require 'date'
   require 'securerandom'
   require 'logger'
+  require 'thread'
 
   unless "".respond_to? :each_char
     require "jcode"
