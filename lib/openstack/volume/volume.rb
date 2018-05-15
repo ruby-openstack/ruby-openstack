@@ -50,9 +50,14 @@ module OpenStack
       true
     end
 
-    def status!(status)
-      data = JSON.generate({'os-reset_status' => {'status' => status}})
-      response = @connection.req('POST', "/#{@volume_path}/#{@id}/action", {:data => data})
+    def status!(status, attach_status = nil)
+      data = {'status' => status}
+      if attach_status
+        data.merge!({'attach_status' => attach_status})
+      end
+      response = @connection.req('POST', "/#{@volume_path}/#{@id}/action", {
+          :data => JSON.generate({'os-reset_status' => data})
+      })
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       self.populate
       true
