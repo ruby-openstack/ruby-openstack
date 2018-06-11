@@ -460,6 +460,30 @@ module Compute
       JSON.parse(response.body)['volumeAttachments']
     end
 
+    # Adds a specific security group to the server.
+    #
+    #   >> server.add_security_group('default')
+    #   => true
+    def add_security_group(security_group)
+      data = JSON.generate(:addSecurityGroup => {:name => security_group})
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      self.populate
+      true
+    end
+
+    # Removes a specific security group from the server.
+    #
+    #   >> server.delete_security_group('default')
+    #   => true
+    def delete_security_group(security_group)
+      data = JSON.generate(:removeSecurityGroup => {:name => security_group})
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      self.populate
+      true
+    end
+
   end
 end
 end
