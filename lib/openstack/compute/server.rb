@@ -9,6 +9,7 @@ module Compute
     attr_reader   :libvirt_id
     attr_reader   :fault
     attr_reader   :status
+    attr_reader   :state
     attr_reader   :progress
     attr_reader   :accessipv4
     attr_reader   :accessipv6
@@ -62,6 +63,7 @@ module Compute
       @libvirt_id = data["OS-EXT-SRV-ATTR:instance_name"]
       @fault = data["fault"]
       @status    = data["status"]
+      @state  = data["OS-EXT-STS:task_state"]
       @progress  = data["progress"]
       @addresses = get_addresses(data["addresses"])
       @metadata  = OpenStack::Compute::Metadata.new(@compute, path, data["metadata"])
@@ -70,7 +72,7 @@ module Compute
       @flavor  = data["flavor"] || data["flavorId"]
       @key_name = data["key_name"] # if provider uses the keys API extension for accessing servers
       @created = data["created"]
-      @security_groups = (data["security_groups"] || []).inject([]){|res, c| res << c["id"]  ; res}
+      @security_groups = (data["security_groups"] || [])
       true
     end
     alias :refresh :populate
@@ -456,6 +458,30 @@ module Compute
       response = @compute.connection.req('GET', "/servers/#{@id}/os-volume_attachments")
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       JSON.parse(response.body)['volumeAttachments']
+    end
+
+    # Adds a specific security group to the server.
+    #
+    #   >> server.add_security_group('default')
+    #   => true
+    def add_security_group(security_group)
+      data = JSON.generate(:addSecurityGroup => {:name => security_group})
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      self.populate
+      true
+    end
+
+    # Removes a specific security group from the server.
+    #
+    #   >> server.delete_security_group('default')
+    #   => true
+    def delete_security_group(security_group)
+      data = JSON.generate(:removeSecurityGroup => {:name => security_group})
+      response = @compute.connection.csreq("POST",@svrmgmthost,"#{@svrmgmtpath}/servers/#{URI.encode(self.id.to_s)}/action",@svrmgmtport,@svrmgmtscheme,{'content-type' => 'application/json'},data)
+      OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
+      self.populate
+      true
     end
 
   end

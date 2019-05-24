@@ -36,10 +36,12 @@ class Connection
     attr_reader   :ssl_version
     attr_reader   :region
     attr_reader   :regions_list #e.g. os.connection.regions_list == {"region-a.geo-1" => [ {:service=>"object-store", :versionId=>"1.0"}, {:service=>"identity", :versionId=>"2.0"}], "region-b.geo-1"=>[{:service=>"identity", :versionId=>"2.0"}] }
+    attr_reader   :force_https
 
     attr_reader   :http
     attr_reader   :is_debug
     attr_reader   :endpoint_type
+    attr_reader   :random_endpoint
 
     # Creates and returns a new Connection object, depending on the service_type
     # passed in the options:
@@ -78,6 +80,9 @@ class Connection
     #   :ssl_version - explicitly set an version (:SSLv3 etc, see  OpenSSL::SSL::SSLContext::METHODS)
     #   :is_debug - Only for development purpose for debug output
     #   :endpoint_type - Type of endpoint. Optional. 'publicURL', 'internalURL', 'adminURL'
+    #   :random_endpoint - (Optional for v3.0 auth only). Select random endpoint from the list provided by the
+    #     auth endpoint to distribute load between endpoints. Defaults to false
+    #   :force_https - Force HTTPS for all connections.
     #
     # The options hash is used to create a new OpenStack::Connection object
     # (private constructor) and this is passed to the constructor of OpenStack::Compute::Connection
@@ -122,6 +127,7 @@ class Connection
       @user_domain = options[:user_domain] || nil
       @project_id = options[:project_id] || nil
       @project_name = options[:project_name] || nil
+      @logger = options[:logger] || nil
       @project_domain_name = options[:project_domain_name] || nil
       @project_domain_id = options[:project_domain_id] || nil
       @domain_name = options[:domain_name] || nil
@@ -138,7 +144,7 @@ class Connection
       raise Exception::InvalidArgument, "Invalid :auth_url parameter." if auth_uri.nil? or auth_uri.host.nil?
       @auth_host = auth_uri.host
       @auth_port = auth_uri.port
-      @auth_scheme = auth_uri.scheme
+      @auth_scheme = options[:force_https] ? 'https' : auth_uri.scheme
       @auth_path = auth_uri.path
       @retry_auth = options[:retry_auth]
       @proxy_host = options[:proxy_host]
@@ -150,6 +156,9 @@ class Connection
       @quantum_version = 'v2.0' if @service_type == 'network'
       @quantum_version = 'v2' if @service_type == 'metering' || @service_type == 'image'
       @endpoint_type = options[:endpoint_type] || "publicURL"
+      @random_endpoint = options[:random_endpoint] || false
+      @force_https = options[:force_https] || false
+      @semaphore = Mutex.new
     end
 
     #specialised from of csreq for PUT object... uses body_stream if possible
@@ -171,7 +180,10 @@ class Connection
         request.body = data
       end
       start_http(server,path,port,scheme,hdrhash)
-      response = @http[server].request(request)
+      response = nil
+      @semaphore.synchronize do
+        response = @http[server].request(request)
+      end
       if @is_debug
         puts "REQUEST: PUT => #{path}"
         puts data if data
@@ -200,19 +212,28 @@ class Connection
       tries = @retries
       time = 3
 
+      request_id = "req-#{SecureRandom.uuid}"
+      started_timestamp = Time.now.to_f * 1000
+      log_request(request_id, "REQUEST: #{method.to_s} => #{scheme}://#{server}#{path}")
+      headers.store('X-Openstack-Request-Id', request_id)
+
       hdrhash = headerprep(headers)
       start_http(server,path,port,scheme,hdrhash)
       request = Net::HTTP.const_get(method.to_s.capitalize).new(path,hdrhash)
       request.body = data
-      if block_given?
-        response =  @http[server].request(request) do |res|
-          res.read_body do |b|
-            yield b
+      response = nil
+      @semaphore.synchronize do
+        if block_given?
+          response =  @http[server].request(request) do |res|
+            res.read_body do |b|
+              yield b
+            end
           end
+        else
+          response = @http[server].request(request)
         end
-      else
-        response = @http[server].request(request)
       end
+      log_request(request_id, "RESPONSE: Code => #{response.code} Time => #{(Time.now.to_f * 1000) - started_timestamp}ms")
       if @is_debug
         puts "REQUEST: #{method.to_s} => #{scheme}://#{server}#{path}"
         puts data if data
@@ -249,6 +270,12 @@ class Connection
     end
 
     private
+
+    def log_request(request_id, message)
+      if @logger.kind_of?(Logger)
+        @logger.info("#{request_id} - #{message}")
+      end
+    end
 
     # Sets up standard HTTP headers
     def headerprep(headers = {}) # :nodoc:
@@ -345,7 +372,7 @@ class Connection
         puts "Can't connect to the server: #{tries} tries  to reconnect" if connection.is_debug
         sleep time += 1
         retry unless (tries -= 1) <= 0
-        raise OpenStack::Exception::Connection, "Unable to connect to #{server}"
+        raise OpenStack::Exception::Connection, "Unable to connect to #{connection.proxy_host}"
       end
 
       response = server.get(connection.auth_path, hdrhash)
@@ -362,7 +389,7 @@ class Connection
         connection.service_host = uri.host
         connection.service_path = uri.path
         connection.service_port = uri.port
-        connection.service_scheme = uri.scheme
+        connection.service_scheme = connection.force_https ? 'https' : uri.scheme
         connection.authok = true
       else
         connection.authok = false
@@ -400,7 +427,7 @@ class Connection
         puts "Can't connect to the server: #{tries} tries  to reconnect" if connection.is_debug
         sleep time += 1
         retry unless (tries -= 1) <= 0
-        raise OpenStack::Exception::Connection, "Unable to connect to  #{server}"
+        raise OpenStack::Exception::Connection, "Unable to connect to  #{connection.proxy_host}"
       end
 
       @uri = String.new
@@ -458,7 +485,7 @@ class Connection
               connection.service_host = @uri.host
               connection.service_path = @uri.path
               connection.service_port = @uri.port
-              connection.service_scheme = @uri.scheme
+              connection.service_scheme = connection.force_https ? 'https' : @uri.scheme
               connection.authok = true
             end
           end
@@ -512,7 +539,7 @@ class Connection
         puts "Can't connect to the server: #{tries} tries to reconnect" if connection.is_debug
         sleep time += 1
         retry unless (tries -= 1) <= 0
-        raise OpenStack::Exception::Connection, "Unable to connect to #{server}"
+        raise OpenStack::Exception::Connection, "Unable to connect to #{connection.proxy_host}"
       end
 
       # Build Auth JSON
@@ -594,13 +621,13 @@ class Connection
             interface_type = connection.endpoint_type.gsub('URL','')
             endpoints = endpoints.select {|ep| ep['interface'] == interface_type}
 
-            # Select endpoint based on region
+            # filter endpoints by region
             if connection.region
-              endpoints.each do |ep|
-                if ep["region"] and ep["region"].upcase == connection.region.upcase
-                  @uri = URI.parse(ep['url'])
-                end
-              end
+              endpoints = endpoints.select {|ep| ep["region"] and ep["region"].upcase == connection.region.upcase}
+            end
+
+            if connection.random_endpoint
+              @uri = URI.parse(endpoints.sample['url'])
             else
               @uri = URI.parse(endpoints[0]['url'])
             end
@@ -611,7 +638,7 @@ class Connection
               connection.service_host = @uri.host
               connection.service_path = @uri.path
               connection.service_port = @uri.port
-              connection.service_scheme = @uri.scheme
+              connection.service_scheme = connection.force_https ? 'https' : @uri.scheme
               connection.authok = true
             end
           end

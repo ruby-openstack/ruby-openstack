@@ -13,6 +13,7 @@ module OpenStack
     attr_reader :snapshot_id
     attr_reader :attachments
     attr_reader :created_at
+    attr_reader :updated_at
     attr_reader :status
 
     def initialize(connection, volume_info)
@@ -37,6 +38,7 @@ module OpenStack
       @snapshot_id  = volume_info["snapshot_id"] || volume_info["snapshotId"]
       @attachments  = volume_info["attachments"]
       @created_at  = volume_info["created_at"] || volume_info["createdAt"]
+      @updated_at  = volume_info["updated_at"]
       @status = volume_info["status"]
     end
 
@@ -48,9 +50,14 @@ module OpenStack
       true
     end
 
-    def status!(status)
-      data = JSON.generate({'os-reset_status' => {'status' => status}})
-      response = @connection.req('POST', "/#{@volume_path}/#{@id}/action", {:data => data})
+    def status!(status, attach_status = nil)
+      data = {'status' => status}
+      if attach_status
+        data.merge!({'attach_status' => attach_status})
+      end
+      response = @connection.req('POST', "/#{@volume_path}/#{@id}/action", {
+          :data => JSON.generate({'os-reset_status' => data})
+      })
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       self.populate
       true
