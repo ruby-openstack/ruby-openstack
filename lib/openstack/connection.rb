@@ -36,6 +36,7 @@ class Connection
     attr_reader   :ssl_version
     attr_reader   :region
     attr_reader   :regions_list #e.g. os.connection.regions_list == {"region-a.geo-1" => [ {:service=>"object-store", :versionId=>"1.0"}, {:service=>"identity", :versionId=>"2.0"}], "region-b.geo-1"=>[{:service=>"identity", :versionId=>"2.0"}] }
+    attr_reader   :force_https
 
     attr_reader   :http
     attr_reader   :is_debug
@@ -81,6 +82,7 @@ class Connection
     #   :endpoint_type - Type of endpoint. Optional. 'publicURL', 'internalURL', 'adminURL'
     #   :random_endpoint - (Optional for v3.0 auth only). Select random endpoint from the list provided by the
     #     auth endpoint to distribute load between endpoints. Defaults to false
+    #   :force_https - Force HTTPS for all connections.
     #
     # The options hash is used to create a new OpenStack::Connection object
     # (private constructor) and this is passed to the constructor of OpenStack::Compute::Connection
@@ -142,7 +144,7 @@ class Connection
       raise Exception::InvalidArgument, "Invalid :auth_url parameter." if auth_uri.nil? or auth_uri.host.nil?
       @auth_host = auth_uri.host
       @auth_port = auth_uri.port
-      @auth_scheme = auth_uri.scheme
+      @auth_scheme = options[:force_https] ? 'https' : auth_uri.scheme
       @auth_path = auth_uri.path
       @retry_auth = options[:retry_auth]
       @proxy_host = options[:proxy_host]
@@ -155,6 +157,7 @@ class Connection
       @quantum_version = 'v2' if @service_type == 'metering'
       @endpoint_type = options[:endpoint_type] || "publicURL"
       @random_endpoint = options[:random_endpoint] || false
+      @force_https = options[:force_https] || false
       @semaphore = Mutex.new
     end
 
@@ -386,7 +389,7 @@ class Connection
         connection.service_host = uri.host
         connection.service_path = uri.path
         connection.service_port = uri.port
-        connection.service_scheme = uri.scheme
+        connection.service_scheme = connection.force_https ? 'https' : uri.scheme
         connection.authok = true
       else
         connection.authok = false
@@ -482,7 +485,7 @@ class Connection
               connection.service_host = @uri.host
               connection.service_path = @uri.path
               connection.service_port = @uri.port
-              connection.service_scheme = @uri.scheme
+              connection.service_scheme = connection.force_https ? 'https' : @uri.scheme
               connection.authok = true
             end
           end
@@ -635,7 +638,7 @@ class Connection
               connection.service_host = @uri.host
               connection.service_path = @uri.path
               connection.service_port = @uri.port
-              connection.service_scheme = @uri.scheme
+              connection.service_scheme = connection.force_https ? 'https' : @uri.scheme
               connection.authok = true
             end
           end
