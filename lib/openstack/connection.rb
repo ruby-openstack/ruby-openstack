@@ -369,7 +369,7 @@ class Connection
         puts "Can't connect to the server: #{tries} tries  to reconnect" if connection.is_debug
         sleep time += 1
         retry unless (tries -= 1) <= 0
-        raise OpenStack::Exception::Connection, "Unable to connect to #{server}"
+        raise OpenStack::Exception::Connection, "Unable to connect to #{connection.proxy_host}"
       end
 
       response = server.get(connection.auth_path, hdrhash)
@@ -424,7 +424,7 @@ class Connection
         puts "Can't connect to the server: #{tries} tries  to reconnect" if connection.is_debug
         sleep time += 1
         retry unless (tries -= 1) <= 0
-        raise OpenStack::Exception::Connection, "Unable to connect to  #{server}"
+        raise OpenStack::Exception::Connection, "Unable to connect to  #{connection.proxy_host}"
       end
 
       @uri = String.new
@@ -536,7 +536,7 @@ class Connection
         puts "Can't connect to the server: #{tries} tries to reconnect" if connection.is_debug
         sleep time += 1
         retry unless (tries -= 1) <= 0
-        raise OpenStack::Exception::Connection, "Unable to connect to #{server}"
+        raise OpenStack::Exception::Connection, "Unable to connect to #{connection.proxy_host}"
       end
 
       # Build Auth JSON
