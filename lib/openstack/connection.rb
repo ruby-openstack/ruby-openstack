@@ -40,6 +40,7 @@ class Connection
     attr_reader   :http
     attr_reader   :is_debug
     attr_reader   :endpoint_type
+    attr_reader   :random_endpoint
 
     # Creates and returns a new Connection object, depending on the service_type
     # passed in the options:
@@ -78,6 +79,8 @@ class Connection
     #   :ssl_version - explicitly set an version (:SSLv3 etc, see  OpenSSL::SSL::SSLContext::METHODS)
     #   :is_debug - Only for development purpose for debug output
     #   :endpoint_type - Type of endpoint. Optional. 'publicURL', 'internalURL', 'adminURL'
+    #   :random_endpoint - (Optional for v3.0 auth only). Select random endpoint from the list provided by the
+    #     auth endpoint to distribute load between endpoints. Defaults to false
     #
     # The options hash is used to create a new OpenStack::Connection object
     # (private constructor) and this is passed to the constructor of OpenStack::Compute::Connection
@@ -151,6 +154,7 @@ class Connection
       @quantum_version = 'v2.0' if @service_type == 'network'
       @quantum_version = 'v2' if @service_type == 'metering'
       @endpoint_type = options[:endpoint_type] || "publicURL"
+      @random_endpoint = options[:random_endpoint] || false
       @semaphore = Mutex.new
     end
 
@@ -614,13 +618,13 @@ class Connection
             interface_type = connection.endpoint_type.gsub('URL','')
             endpoints = endpoints.select {|ep| ep['interface'] == interface_type}
 
-            # Select endpoint based on region
+            # filter endpoints by region
             if connection.region
-              endpoints.each do |ep|
-                if ep["region"] and ep["region"].upcase == connection.region.upcase
-                  @uri = URI.parse(ep['url'])
-                end
-              end
+              endpoints = endpoints.select {|ep| ep["region"] and ep["region"].upcase == connection.region.upcase}
+            end
+
+            if connection.random_endpoint
+              @uri = URI.parse(endpoints.sample['url'])
             else
               @uri = URI.parse(endpoints[0]['url'])
             end
