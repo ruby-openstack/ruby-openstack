@@ -37,7 +37,6 @@ Gem::Specification.new do |s|
     "lib/openstack/identity/tenant.rb",
     "lib/openstack/identity/user.rb",
     "lib/openstack/image/connection.rb",
-    "lib/openstack/image/image.rb",
     "lib/openstack/metering/connection.rb",
     "lib/openstack/network/connection.rb",
     "lib/openstack/network/network.rb",

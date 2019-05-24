@@ -154,7 +154,7 @@ class Connection
       @authok = false
       @http = {}
       @quantum_version = 'v2.0' if @service_type == 'network'
-      @quantum_version = 'v2' if @service_type == 'metering' || @service_type == 'image'
+      @quantum_version = 'v2' if @service_type == 'metering'
       @endpoint_type = options[:endpoint_type] || "publicURL"
       @random_endpoint = options[:random_endpoint] || false
       @force_https = options[:force_https] || false

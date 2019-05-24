@@ -32,7 +32,6 @@ module OpenStack
   require 'openstack/volume/volume'
   require 'openstack/volume/snapshot'
   require 'openstack/image/connection'
-  require 'openstack/image/image'
   require 'openstack/network/connection'
   require 'openstack/network/network'
   require 'openstack/network/subnet'
