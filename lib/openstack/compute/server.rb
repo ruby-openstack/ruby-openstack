@@ -1,3 +1,5 @@
+require 'cgi'
+
 module OpenStack
 module Compute
   class Server
@@ -52,7 +54,7 @@ module Compute
     #  >> server.refresh
     #  => true
     def populate(data=nil)
-      path = "/servers/#{URI.encode(@id.to_s)}"
+      path = "/servers/#{CGI.escape(@id.to_s)}"
       if data.nil? then
           response = @compute.connection.req("GET", path)
           OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
@@ -113,7 +115,7 @@ module Compute
       OpenStack::Exception.raise_exception(response) unless response.code.match(/^20.$/)
       true
     end
-    
+
     # Sends an API request to start (resume) the server.
     #
     # Returns true if the API call succeeds.
