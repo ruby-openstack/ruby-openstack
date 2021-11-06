@@ -74,7 +74,7 @@ module Swift
     #   => ["test", "video"]
     def containers(limit = nil, marker = nil)
       path = OpenStack.get_query_params({:limit=>limit, :marker=>marker, :format=>'json'}, [:limit, :marker, :format], "")
-      response = @connection.req("GET", URI.encode(path))
+      response = @connection.req("GET", URI.encode_www_form_component(path))
       OpenStack.symbolize_keys(JSON.parse(response.body)).inject([]){|res,cur| res << cur[:name]; res }
     end
     alias :list_containers :containers
@@ -90,7 +90,7 @@ module Swift
     #        "container2" => { :bytes => "105943", :count => "25" } }
     def containers_detail(limit = nil, marker = nil)
       path = OpenStack.get_query_params({:limit=>limit, :marker=>marker, :format=>'json'}, [:limit, :marker, :format], "")
-      response = @connection.req("GET", URI.encode(path))
+      response = @connection.req("GET", URI.encode_www_form_component(path))
       OpenStack.symbolize_keys(JSON.parse(response.body)).inject({}){|res,current| res.merge!({current[:name]=>{:bytes=>current[:bytes].to_s,:count=>current[:count].to_s}}) ; res }
     end
     alias :list_containers_info :containers_detail
@@ -103,7 +103,7 @@ module Swift
     #   cf.container_exists?('bad_container')
     #   => false
     def container_exists?(containername)
-      path = "/#{URI.encode(containername.to_s)}"
+      path = "/#{URI.encode_www_form_component(containername.to_s)}"
       begin
         response = @connection.req("HEAD", path)
       rescue OpenStack::Exception::ItemNotFound
@@ -126,7 +126,7 @@ module Swift
     def create_container(containername)
       raise OpenStack::Exception::InvalidArgument.new("Container name cannot contain '/'") if containername.match("/")
       raise OpenStack::Exception::InvalidArgument.new("Container name is limited to 256 characters") if containername.length > 256
-      path = "/#{URI.encode(containername.to_s)}"
+      path = "/#{URI.encode_www_form_component(containername.to_s)}"
       @connection.req("PUT", path, {:headers=>{"Content-Length"=>"0"}})
       OpenStack::Swift::Container.new(self, containername)
     end
@@ -145,7 +145,7 @@ module Swift
     #   cf.delete_container('nonexistent')
     #   => OpenStack::Exception::ItemNotFound: The container: "nonexistant" does not exist. The resource could not be found
     def delete_container(containername)
-      path = "/#{URI.encode(containername.to_s)}"
+      path = "/#{URI.encode_www_form_component(containername.to_s)}"
       begin
         @connection.req("DELETE", path)
       rescue OpenStack::Exception::ResourceStateConflict => conflict

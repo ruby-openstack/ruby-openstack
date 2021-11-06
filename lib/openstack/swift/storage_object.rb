@@ -55,7 +55,7 @@ module Swift
       if data.nil? #just create an empty object
         path = "/#{container.name}/#{objectname}"
         provided_headers["content-length"] = "0"
-        container.swift.connection.req("PUT", URI.encode(path), {:headers=>provided_headers})
+        container.swift.connection.req("PUT", URI.encode_www_form_component(path), {:headers=>provided_headers})
       else
         self.new(container, objectname).write(data, provided_headers)
       end
@@ -70,7 +70,7 @@ module Swift
     #
     def object_metadata
       path = "/#{@containername}/#{@name}"
-      response = @container.swift.connection.req("HEAD", URI.encode(path))
+      response = @container.swift.connection.req("HEAD", URI.encode_www_form_component(path))
       resphash = response.to_hash
       meta = { :bytes=>resphash["content-length"][0],
                :content_type=>resphash["content-type"][0],
@@ -141,7 +141,7 @@ module Swift
       end
       path = "/#{@containername}/#{@name}"
       begin
-        response = @container.swift.connection.req("GET", URI.encode(path), {:headers=>headers})
+        response = @container.swift.connection.req("GET", URI.encode_www_form_component(path), {:headers=>headers})
         response.body
       rescue OpenStack::Exception::ItemNotFound => not_found
         msg = "No Object \"#{@name}\" found in Container \"#{@containername}\".  #{not_found.message}"
@@ -170,7 +170,7 @@ module Swift
         headers['Range'] = range
       end
       server = @container.swift.connection.service_host
-      path = @container.swift.connection.service_path + URI.encode("/#{@containername}/#{@name}")
+      path = @container.swift.connection.service_path + URI.encode_www_form_component("/#{@containername}/#{@name}")
       port = @container.swift.connection.service_port
       scheme = @container.swift.connection.service_scheme
       response = @container.swift.connection.csreq("GET", server, path, port, scheme, headers, nil, 0, &block)
@@ -195,7 +195,7 @@ module Swift
       headers['content-type'] = 'application/json'
       path = "/#{@containername}/#{@name}"
       begin
-        response = @container.swift.connection.req("POST", URI.encode(path), {:headers=>headers})
+        response = @container.swift.connection.req("POST", URI.encode_www_form_component(path), {:headers=>headers})
       rescue OpenStack::Exception::ItemNotFound => not_found
         msg = "Can't set metadata: No Object \"#{@name}\" found in Container \"#{@containername}\".  #{not_found.message}"
         raise OpenStack::Exception::ItemNotFound.new(msg, not_found.response_code, not_found.response_body)
@@ -223,7 +223,7 @@ module Swift
       headers = {'X-Object-Manifest' => manifest}
       path = "/#{@containername}/#{@name}"
       begin
-        response = @container.swift.connection.req("POST", URI.encode(path), {:headers=>headers})
+        response = @container.swift.connection.req("POST", URI.encode_www_form_component(path), {:headers=>headers})
       rescue OpenStack::Exception::ItemNotFound => not_found
         msg = "Can't set manifest: No Object \"#{@name}\" found in Container \"#{@containername}\".  #{not_found.message}"
         raise OpenStack::Exception::ItemNotFound.new(msg, not_found.response_code, not_found.response_body)
@@ -254,7 +254,7 @@ module Swift
     #
     def write(data, headers = {})
       server = @container.swift.connection.service_host
-      path = @container.swift.connection.service_path + URI.encode("/#{@containername}/#{@name}")
+      path = @container.swift.connection.service_path + URI.encode_www_form_component("/#{@containername}/#{@name}")
       port = @container.swift.connection.service_port
       scheme = @container.swift.connection.service_scheme
       body = (data.is_a?(String))? StringIO.new(data) : data
@@ -289,7 +289,7 @@ module Swift
       provided_headers["content-length"] = "0"
       path = "/#{container_name}/#{object_name}"
       begin
-        response = @container.swift.connection.req("PUT", URI.encode(path), {:headers=>provided_headers})
+        response = @container.swift.connection.req("PUT", URI.encode_www_form_component(path), {:headers=>provided_headers})
       rescue OpenStack::Exception::ItemNotFound => not_found
         msg = "Can't copy \"#{@name}\": No Object \"#{@name}\" found in Container \"#{@containername}\".  #{not_found.message}"
         raise OpenStack::Exception::ItemNotFound.new(msg, not_found.response_code, not_found.response_body)

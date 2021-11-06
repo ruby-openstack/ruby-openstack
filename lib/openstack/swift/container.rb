@@ -18,7 +18,7 @@ module Swift
 
     # Retrieves Metadata for the container
     def container_metadata
-      path = "/#{URI.encode(@name.to_s)}"
+      path = "/#{URI.encode_www_form_component(@name.to_s)}"
       response = @swift.connection.req("HEAD", path)
       resphash = response.to_hash
       meta = {:bytes=>resphash["x-container-bytes-used"][0], :count=>resphash["x-container-object-count"][0], :metadata=>{}}
@@ -54,7 +54,7 @@ module Swift
       headers = metadatahash.inject({}){|res, (k,v)| ((k.to_s.match /^X-Container-Meta-/i) ? res[k.to_s]=v : res["X-Container-Meta-#{k}"]=v ) ; res}
       headers.merge!({'content-type'=>'application/json'})
       begin
-        response = @swift.connection.req("POST", URI.encode("/#{@name.to_s}"), {:headers=>headers} )
+        response = @swift.connection.req("POST", URI.encode_www_form_component("/#{@name.to_s}"), {:headers=>headers} )
         true
       rescue OpenStack::Exception::ItemNotFound => not_found
         msg = "Cannot set metadata - container: \"#{@name}\" does not exist!.  #{not_found.message}"
@@ -112,7 +112,7 @@ module Swift
     def objects(params = {})
       path = "/#{@name.to_s}"
       path = (params.empty?)? path : OpenStack.get_query_params(params, [:limit, :marker, :prefix, :path, :delimiter], path)
-      response = @swift.connection.req("GET", URI.encode(path))
+      response = @swift.connection.req("GET", URI.encode_www_form_component(path))
       OpenStack.symbolize_keys(JSON.parse(response.body)).inject([]){|res, cur| res << cur[:name]; res }
     end
     alias :list_objects :objects
@@ -135,7 +135,7 @@ module Swift
     def objects_detail(params = {})
       path = "/#{@name.to_s}"
       path = (params.empty?)? path : OpenStack.get_query_params(params, [:limit, :marker, :prefix, :path, :delimiter], path)
-      response = @swift.connection.req("GET", URI.encode(path))
+      response = @swift.connection.req("GET", URI.encode_www_form_component(path))
       OpenStack.symbolize_keys(JSON.parse(response.body)).inject({}){|res, current| res.merge!({current[:name]=>{:bytes=>current[:bytes].to_s, :content_type=>current[:content_type].to_s, :last_modified=>current[:last_modified], :hash=>current[:hash]}}) ; res }
     end
     alias :list_objects_info :objects_detail
@@ -161,7 +161,7 @@ module Swift
     def object_exists?(objectname)
       path = "/#{@name.to_s}/#{objectname}"
       begin
-        response = @swift.connection.req("HEAD", URI.encode(path))
+        response = @swift.connection.req("HEAD", URI.encode_www_form_component(path))
         true
       rescue OpenStack::Exception::ItemNotFound
         false
@@ -196,7 +196,7 @@ module Swift
     def delete_object(objectname)
       path = "/#{@name.to_s}/#{objectname}"
       begin
-        response = @swift.connection.req("DELETE", URI.encode(path))
+        response = @swift.connection.req("DELETE", URI.encode_www_form_component(path))
         true
       rescue OpenStack::Exception::ItemNotFound => not_found
         msg = "The object: \"#{objectname}\" does not exist in container \"#{@name}\".  #{not_found.message}"

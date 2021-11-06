@@ -86,8 +86,8 @@ module OpenStack
 
   def self.paginate(options = {})
     path_args = []
-    path_args.push(URI.encode("limit=#{options[:limit]}")) if options[:limit]
-    path_args.push(URI.encode("offset=#{options[:offset]}")) if options[:offset]
+    path_args.push(URI.encode_www_form_component("limit=#{options[:limit]}")) if options[:limit]
+    path_args.push(URI.encode_www_form_component("offset=#{options[:offset]}")) if options[:offset]
     path_args.join("&")
   end
 
