@@ -15,19 +15,17 @@ gem 'openstack'
 
 ## Maintainer
 
-The library is currently maintained by [Nitrado](http://nitrado.net/).
-The people behind the OpenStack Team from Nitrado are Alexander Birkner and Aaron Fischer.
+This library is no longer maintained. If you like to continue working on this library please contact alex.birkner@gmail.com or mail@aaron-fischer.net.
 
 ## Authors
 
-* Alexander Birkner (alexander.birkner@marbis.net)
-* Aaron Fischer (aaron.fischer@marbis.net)
+* Alexander Birkner (alex.birkner@gmail.com)
+* Aaron Fischer (mail@aaron-fischer.net)
 * Marios Andreou (marios@redhat.com)
 * Dan Prince (dprince@redhat.com)
 * Naveed Massjouni (naveedm9@gmail.com)
 
 Initial code checkin on May 23rd 2012 - code refactored from and based on the Rackspace [Cloud Servers gem](https://github.com/rackspace/ruby-openstack-compute) and [Rackspace Cloud Files gem](https://github.com/rackspace/ruby-cloudfiles).
-Since Nov 2015 the library is maintained by [Nitrado](http://nitrado.net/).
 
 ## License
 
